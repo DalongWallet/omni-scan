@@ -1,13 +1,9 @@
 package main
 
 import (
-	"omni-scan/storage/leveldb"
+	"omni-scan/api/rest"
 )
 
 func main() {
-	db, err := leveldb.Open("./testdb")
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
+	rest.NewHttpServer(80)
 }
