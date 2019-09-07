@@ -8,4 +8,5 @@ Wrapper tool for bitcoin omni layer.
     * Push raw transaction
     * Get Address transaction history
     * Get Address omni property balance
-    * Unconfirmed transaction list
+    * Unconfirmed transaction list   
+* Optimize release

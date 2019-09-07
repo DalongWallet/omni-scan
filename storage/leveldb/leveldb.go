@@ -6,27 +6,27 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
-type LevelDBStorage struct {
+type Storage struct {
 	DB *leveldb.DB
 }
 
-func Open(path string) (*LevelDBStorage, error) {
-	leveldb, err := leveldb.OpenFile(path, nil)
+func Open(path string) (*Storage, error) {
+	db, err := leveldb.OpenFile(path, nil)
 	if err != nil {
-		return &LevelDBStorage{}, err
+		return &Storage{}, err
 	}
-	return &LevelDBStorage{DB:leveldb}, nil
+	return &Storage{DB: db}, nil
 }
 
-func (s *LevelDBStorage) Close() error {
+func (s *Storage) Close() error {
 	return s.DB.Close()
 }
 
-func (s *LevelDBStorage) Get(key string) ([]byte, error)  {
+func (s *Storage) Get(key string) ([]byte, error)  {
 	return s.DB.Get([]byte(key), nil)
 }
 
-func (s *LevelDBStorage) Set(key string, value []byte) error {
+func (s *Storage) Set(key string, value []byte) error {
 	return s.DB.Put([]byte(key), value,nil)
 }
 
@@ -40,19 +40,19 @@ func iterateData(iter iterator.Iterator)  (data [][]byte, err error) {
 	return
 }
 
-func (s *LevelDBStorage) Range(start, end string)([][]byte, error) {
+func (s *Storage) Range(start, end string)([][]byte, error) {
 	iter := s.DB.NewIterator(&util.Range{Start:[]byte(start), Limit:[]byte(end)}, nil)
 	defer iter.Release()
 	return iterateData(iter)
 }
 
-func (s *LevelDBStorage) GetWithPrefix(prefix string) ([][]byte, error) {
+func (s *Storage) GetWithPrefix(prefix string) ([][]byte, error) {
 	iter := s.DB.NewIterator(util.BytesPrefix([]byte(prefix)), nil)
 	defer iter.Release()
 	return iterateData(iter)
 }
 
-func (s *LevelDBStorage) NewBatch() *Batch {
+func (s *Storage) NewBatch() *Batch {
 	return &Batch{
 		db:    s,
 		batch: new(leveldb.Batch),
@@ -60,7 +60,7 @@ func (s *LevelDBStorage) NewBatch() *Batch {
 }
 
 type Batch struct {
-	db *LevelDBStorage
+	db *Storage
 	batch *leveldb.Batch
 }
 
