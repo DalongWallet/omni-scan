@@ -120,11 +120,11 @@ OUT:
 			continue
 		}
 
-		if err = db.Set("lastScanBlockIndex", []byte(strconv.FormatInt(lastScanBlockHeight+1, 10))); err != nil {
+		if err = db.Set("lastScanBlockIndex", []byte(strconv.FormatInt(lastScanBlockHeight, 10))); err != nil {
 			fmt.Fprintf(logFile, "%+v \n", err)
 			continue
 		}
 		lastScanBlockHeight++
-		fmt.Fprintf(logFile, "================== hasScanBlockHeight: %d, recordNums: %d, use: %d \n", lastScanBlockHeight, recordNums, time.Since(start))
+		fmt.Fprintf(logFile, "================== hasScanBlockHeight: %d, recordNums: %d, use: %s \n", lastScanBlockHeight, recordNums, time.Since(start).String())
 	}
 }
