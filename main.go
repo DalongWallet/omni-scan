@@ -60,7 +60,7 @@ OUT:
 		time.Sleep(1)
 		latestBlock, err := rpc.GetLatestBlockInfo()
 		if err != nil {
-			fmt.Fprintf(logFile, "%+v", err)
+			fmt.Fprintf(logFile, "%+v \n", err)
 			continue
 		}
 
@@ -71,13 +71,13 @@ OUT:
 		batch := db.NewBatch()
 		txHashList, err := rpc.ListBlockTransactions(lastScanBlockHeight)
 		if err != nil {
-			fmt.Fprintf(logFile, "%+v", err)
+			fmt.Fprintf(logFile, "%+v \n", err)
 			continue
 		}
 		for _, txHash := range txHashList {
 			tx, err := rpc.GetTransaction(txHash)
 			if err != nil {
-				fmt.Fprintf(logFile, "%+v", err)
+				fmt.Fprintf(logFile, "%+v \n", err)
 				continue OUT
 			}
 			// 1. 存交易
@@ -85,7 +85,7 @@ OUT:
 			key2 := fmt.Sprintf("%s-%d-%s", tx.ReferenceAddress, tx.PropertyId, tx.TxId)
 			value, err := json.Marshal(tx)
 			if err != nil {
-				fmt.Fprintf(logFile, "%+v", err)
+				fmt.Fprintf(logFile, "%+v \n", err)
 				continue OUT
 			}
 			batch.Set(key1, value).Set(key2, value)
@@ -97,13 +97,13 @@ OUT:
 			} {
 				addrAllBalances, err := rpc.GetAllBalancesForAddress(addr)
 				if err != nil {
-					fmt.Fprintf(logFile, "%+v", err)
+					fmt.Fprintf(logFile, "%+v \n", err)
 					continue OUT
 				}
 				for _, one := range addrAllBalances {
 					key1 = fmt.Sprintf("%s-%d", addr, one.PropertyId)
 					if value, err = json.Marshal(one); err != nil {
-						fmt.Fprintf(logFile, "%+v", err)
+						fmt.Fprintf(logFile, "%+v \n", err)
 						continue OUT
 					}
 					batch.Set(key1, value)
@@ -112,15 +112,15 @@ OUT:
 		}
 
 		if err = batch.Commit(); err != nil {
-			fmt.Fprintf(logFile, "%+v", err)
+			fmt.Fprintf(logFile, "%+v \n", err)
 			continue
 		}
 
 		if err = db.Set("lastScanBlockIndex", []byte(strconv.FormatInt(lastScanBlockHeight+1, 10))); err != nil {
-			fmt.Fprintf(logFile, "%+v", err)
+			fmt.Fprintf(logFile, "%+v \n", err)
 			continue
 		}
 		lastScanBlockHeight++
-		fmt.Fprintf(logFile, "================== hasScanBlockHeight: %d", lastScanBlockHeight)
+		fmt.Fprintf(logFile, "================== hasScanBlockHeight: %d \n", lastScanBlockHeight)
 	}
 }
