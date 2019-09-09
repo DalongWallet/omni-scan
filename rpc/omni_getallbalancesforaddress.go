@@ -8,8 +8,8 @@ func (GetAllBalancesForAddressCommand) Method() string {
 	return "omni_getallbalancesforaddress"
 }
 
-func (GetAllBalancesForAddressCommand) ID() string {
-	return "1"
+func (GetAllBalancesForAddressCommand) ID() int {
+	return 1
 }
 
 func (cmd GetAllBalancesForAddressCommand) Params() []interface{} {

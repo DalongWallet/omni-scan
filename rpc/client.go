@@ -3,6 +3,7 @@ package rpc
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -34,6 +35,7 @@ func (c *OmniClient) Exec(cmd command) ([]byte, error) {
 	if err != nil {
 		return []byte{}, err
 	}
+	fmt.Println("body:", string(body))
 
 	req, err := http.NewRequest(http.MethodPost, "http://"+c.config.Host, bytes.NewReader(body))
 	if err != nil {
@@ -54,6 +56,7 @@ func (c *OmniClient) Exec(cmd command) ([]byte, error) {
 	if err != nil {
 		return []byte{}, err
 	}
+	fmt.Println("respStr:", string(respBytes))
 
 	var rpcResp rpcResponse
 	if err = json.Unmarshal(respBytes, &rpcResp); err != nil {

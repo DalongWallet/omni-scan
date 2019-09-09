@@ -9,8 +9,8 @@ func (ListBlocksTransactionsCommand) Method() string {
 	return "omni_listblockstransactions"
 }
 
-func (ListBlocksTransactionsCommand) ID() string {
-	return "1"
+func (ListBlocksTransactionsCommand) ID() int {
+	return 1
 }
 
 func (cmd ListBlocksTransactionsCommand) Params() []interface{} {

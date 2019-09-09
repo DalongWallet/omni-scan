@@ -6,8 +6,8 @@ func (GetInfoCommand) Method() string {
 	return "omni_getinfo"
 }
 
-func (GetInfoCommand) ID() string {
-	return "1"
+func (GetInfoCommand) ID() int {
+	return 1
 }
 
 func (GetInfoCommand) Params() []interface{} {

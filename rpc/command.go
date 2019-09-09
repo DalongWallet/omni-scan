@@ -6,7 +6,7 @@ import (
 )
 
 type command interface {
-	ID() string
+	ID()     int
 	Method() string
 	Params() []interface{}
 }
@@ -16,7 +16,7 @@ func marshalCmd(cmd command) ([]byte, error) {
 }
 
 type rpcReqeust struct {
-	ID      string            `json:"id"`
+	ID      int            `json:"id"`
 	JsonRPC string            `json:"jsonrpc"`
 	Method  string            `json:"method"`
 	Params  []interface{}     `json:"params"`

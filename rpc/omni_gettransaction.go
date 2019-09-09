@@ -8,8 +8,8 @@ func (GetTransactionCommand) Method() string {
 	return "omni_gettransaction"
 }
 
-func (GetTransactionCommand) ID() string {
-	return "1"
+func (GetTransactionCommand) ID() int {
+	return 1
 }
 
 func (cmd GetTransactionCommand) Params() []interface{} {

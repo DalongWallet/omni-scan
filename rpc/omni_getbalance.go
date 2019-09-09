@@ -10,8 +10,8 @@ func (GetBalanceCommand) Method() string {
 	return "omni_getbalance"
 }
 
-func (GetBalanceCommand) ID() string {
-	return "1"
+func (GetBalanceCommand) ID() int {
+	return 1
 }
 
 func (cmd GetBalanceCommand) Params() []interface{} {

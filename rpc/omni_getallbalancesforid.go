@@ -8,8 +8,8 @@ func (GetAllbalancesForIdCommand) Method() string {
 	return "omni_getallbalancesforid"
 }
 
-func (GetAllbalancesForIdCommand) ID() string {
-	return "1"
+func (GetAllbalancesForIdCommand) ID() int {
+	return 1
 }
 
 func (cmd GetAllbalancesForIdCommand) Params() []interface{} {
