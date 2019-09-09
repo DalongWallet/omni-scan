@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
 	"omni-scan/models"
 )
 
@@ -12,73 +11,102 @@ type Block struct {
 	OmniTransactionsAmount int64 `json:"blocktransactions"`
 }
 
-func GetLatestBlockInfo() (block Block, err error) {
+func (client *OmniClient) GetLatestBlockInfo() (block models.OmniInfoResult, err error) {
+	cmd := GetInfoCommand{}
+
 	var result []byte
-	if result, err = DefaultRpcClient.SendJsonRpc("omni_getinfo"); err != nil {
+	if result, err = client.Exec(cmd); err != nil {
 		return block, err
 	}
+
 	err = json.Unmarshal(result, &block)
-	err = errors.Wrap(err, "Unmarshal data to struct Block failed")
 	return
 }
 
 // index can be block height or block index
-func ListBlockTransactions(index int64)(txHashList []string, err error) {
-	var result []byte
-	if result, err = DefaultRpcClient.SendJsonRpc("omni_listblocktransactions", index); err != nil {
-		return txHashList, err
+func (client *OmniClient) ListBlockTransactions(index int)(txIdList []string, err error) {
+	cmd := ListBlockTransactionsCommand{
+		Index: index,
 	}
-	err = json.Unmarshal(result, &txHashList)
-	err = errors.Wrap(err, "Unmarshal data to txHashList failed")
+
+	var result []byte
+	if result, err = client.Exec(cmd); err != nil {
+		return txIdList, err
+	}
+
+	err = json.Unmarshal(result, &txIdList)
 	return
 }
 
-func GetTransaction(txHash string)(tx models.Transaction, err error) {
+func (client *OmniClient) ListBlocksTransactions(firstBlock, lastBlock int64)(txIdList []string, err error) {
+	cmd := ListBlocksTransactionsCommand{
+		FirstBlock: firstBlock,
+		LastBlock: lastBlock,
+	}
+
 	var result []byte
-	if result, err = DefaultRpcClient.SendJsonRpc("omni_gettransaction"); err != nil {
+	if result, err = client.Exec(cmd); err != nil {
+		return txIdList, err
+	}
+
+	err = json.Unmarshal(result, &txIdList)
+	return
+}
+
+
+func (client *OmniClient) GetTransaction(txId string)(tx models.Transaction, err error) {
+	cmd := GetTransactionCommand{
+		TxId: txId,
+	}
+
+	var result []byte
+	if result, err = client.Exec(cmd); err != nil {
 		return
 	}
+
 	err = json.Unmarshal(result, &tx)
-	err = errors.Wrap(err, "Unmarshal data to struct Transaction failed")
 	return
 }
 
-func GetBlockTransactions(index int64) (txList []models.Transaction,err error) {
-	var result []byte
-	if result, err = DefaultRpcClient.SendJsonRpc("omni_listblocktransactions", index); err != nil {
-		return
+func (client *OmniClient) GetBalance(address string, propertyId int) (tokenBalance models.TokenBalance, err error) {
+	cmd := GetBalanceCommand{
+		Address:    address,
+		PropertyId: propertyId,
 	}
-	err = json.Unmarshal(result, &txList)
-	err = errors.Wrap(err, "Unmarshal data to []models.Transaction failed")
-	return
-}
 
-func GetBalance(address string, propertyId int) (tokenBalance models.TokenBalance, err error) {
 	var result []byte
-	if result, err = DefaultRpcClient.SendJsonRpc("omni_getbalance", address); err != nil {
+	if result, err = client.Exec(cmd); err != nil {
 		return
 	}
+
 	err = json.Unmarshal(result, &tokenBalance)
-	err = errors.Wrap(err, "Unmarshal data to struct tokenBalance failed")
 	return
 }
 
-func GetAllBalancesForId(propertyId int) (addrTokenBalanceList []models.AddressTokenBalance, err error) {
+func (client *OmniClient) GetAllBalancesForId(propertyId int) (addrTokenBalanceList []models.AddressTokenBalance, err error) {
+	cmd := GetAllbalancesForIdCommand{
+		PropertyId:propertyId,
+	}
+
 	var result []byte
-	if result, err = DefaultRpcClient.SendJsonRpc("omni_getallbalancesforid", propertyId); err != nil {
+	if result, err = client.Exec(cmd); err != nil {
 		return
 	}
+
 	err = json.Unmarshal(result, &addrTokenBalanceList)
-	err = errors.Wrap(err, "Unmarshal data to []models.AddressTokenBalance failed")
 	return
 }
 
-func GetAllBalancesForAddress(address string) (propertyTokenBalanceList []models.PropertyTokenBalance, err error) {
+func (client *OmniClient) GetAllBalancesForAddress(address string) (propertyTokenBalanceList []models.PropertyTokenBalance, err error) {
+	cmd := GetAllBalancesForAddressCommand{
+		Address:address,
+	}
+
 	var result []byte
-	if result, err = DefaultRpcClient.SendJsonRpc("omni_getallbalancesforaddress", address); err != nil {
+	if result, err = client.Exec(cmd); err != nil {
 		return
 	}
+
 	err = json.Unmarshal(result, &propertyTokenBalanceList)
-	err = errors.Wrap(err, "Unmarshal data to []models.PropertyTokenBalancen failed")
 	return
 }

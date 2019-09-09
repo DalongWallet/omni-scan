@@ -2,87 +2,82 @@ package rpc
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"time"
 )
 
-var DefaultRpcClient = &RpcClient{
-	Host:   "127.0.0.1",
-	Port:   "8332",
-	Client: &http.Client{},
+var DefaultOmniClient = &OmniClient{
+	config: &ConnConfig{
+		Host: "127.0.0.1:8332",
+		User: os.Getenv("OMNICORE_USER"),
+		Pwd:  os.Getenv("OMNICORE_PWD"),
+	},
+	httpClient: newHTTPClient(),
 }
 
-type RpcClient struct {
+type ConnConfig struct {
 	Host string
-	Port string
-	*http.Client
+	User string
+	Pwd  string
 }
 
-func (client *RpcClient) SendJsonRpc(method string, params ...interface{}) ([]byte, error) {
-	url := fmt.Sprintf("http://%s:%s", client.Host, client.Port)
-	req := CommonRpcReq{
-		// TODO: 取消 id 硬编码
-		Id:         1,
-		RpcVersion: "2.0",
-		Method:     method,
-		Params:     params,
-	}
-	data, err := json.Marshal(req)
-	if err != nil {
-		return nil, errors.Wrap(err, "Marshal req failed")
-	}
-	request, err := http.NewRequest("POST", url, bytes.NewReader(data))
-	if err != nil {
-		return nil, errors.Wrap(err, "NewReq failed")
-	}
-	request.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte("togreat:cd32d5e86e")))
+type OmniClient struct {
+	config     *ConnConfig
+	httpClient *http.Client
+}
 
-	resp, err := client.Do(request)
+func (c *OmniClient) Exec(cmd command) ([]byte, error) {
+	body, err := marshalCmd(cmd)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, "http://"+c.config.Host, bytes.NewReader(body))
+	if err != nil {
+		return nil, errors.Wrap(err, "New request failed")
+	}
+
+	req.Close = true
+	req.Header.Set("Content-Type", "application/json")
+	req.SetBasicAuth(c.config.User, c.config.Pwd)
+
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "SendReq failed")
 	}
 	defer resp.Body.Close()
-	respData, err := ioutil.ReadAll(resp.Body)
+
+	respBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, errors.Wrap(err, "Read data from resp.Body failed")
 	}
-	commonResp := &CommonRpcResp{}
-	err = json.Unmarshal(respData, commonResp)
+
+	rpcResp := newRpcResponse()
+	err = json.Unmarshal(respBytes, &rpcResp)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unmarshal data to CommonRpcResp failed")
 	}
 
-	return commonResp.result()
+	return rpcResp.result()
 }
 
-type CommonRpcReq struct {
-	Id         int           `json:"id"`
-	RpcVersion string        `json:"jsonrpc"`
-	Method     string        `json:"method"`
-	Params     []interface{} `json:"params"`
-}
-
-type rpcError struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
-}
-
-func (e *rpcError) Error() string {
-	return fmt.Sprintf("errCode: %d, errMsg: %s", e.Code, e.Message)
-}
-
-type CommonRpcResp struct {
-	Result json.RawMessage `json:"result"`
-	Error  *rpcError       `json:"error"`
-}
-
-func (resp CommonRpcResp) result() ([]byte, error) {
-	if resp.Error != nil {
-		return []byte{}, errors.Wrap(resp.Error,"unexpect jsonRpc Resp")
+func NewOmniClient(config *ConnConfig) (*OmniClient) {
+	return &OmniClient{
+		config:     config,
+		httpClient: newHTTPClient(),
 	}
-	return json.Marshal(resp.Result)
+}
+
+func newHTTPClient() *http.Client {
+	return &http.Client{
+		Transport: &http.Transport{
+			ResponseHeaderTimeout: 5 * time.Second,
+			ExpectContinueTimeout: 4 * time.Second,
+			IdleConnTimeout:       5 * 60 * time.Second,
+		},
+	}
 }
