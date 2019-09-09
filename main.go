@@ -62,7 +62,6 @@ OUT:
 	for {
 		time.Sleep(1)
 		latestBlock, err := client.GetLatestBlockInfo()
-		fmt.Println("latestBlock.Height:",latestBlock.BlockHeight)
 		if err != nil {
 			fmt.Fprintf(logFile, "%+v \n", err)
 			continue

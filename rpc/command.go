@@ -36,10 +36,6 @@ type rpcResponse struct {
 	Error  *rpcError       `json:"error"`
 }
 
-func newRpcResponse() *rpcResponse {
-	return &rpcResponse{}
-}
-
 func (resp *rpcResponse) result() ([]byte, error) {
 	if resp.Error != nil {
 		return []byte{}, resp.Error
