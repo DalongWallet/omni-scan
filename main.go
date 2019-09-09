@@ -1,22 +1,27 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/syndtr/goleveldb/leveldb/errors"
-	"omni-scan/storage/leveldb"
 	"github.com/judwhite/go-svc/svc"
+	"github.com/syndtr/goleveldb/leveldb/errors"
 	"omni-scan/api/rest"
-	"time"
 	"omni-scan/rpc"
+	"omni-scan/storage/leveldb"
+	"os"
 	"strconv"
+	"time"
 )
 
-type program struct{
-
+type program struct {
 }
 
 func main() {
-	rest.NewHttpServer(80)
+	if len(os.Args) > 1 {
+		ScanData()
+	}else {
+		rest.NewHttpServer(80)
+	}
 }
 
 func (program) Init(env svc.Environment) error {
@@ -24,51 +29,98 @@ func (program) Init(env svc.Environment) error {
 	return nil
 }
 
-func SaveData() {
-	db, err := leveldb.Open("")
+func ScanData() {
+	logFile, err := os.OpenFile("omni_data.log", os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		panic(err)
+	}
+	defer logFile.Close()
+
+	db, err := leveldb.Open("./omni_db")
 	if err != nil {
 		panic(err)
 	}
 	defer db.Close()
-	var curBlockHeight int64
-	if gatherBlock, err := db.Get("gatherBlock"); err != nil {
-		if err == errors.ErrNotFound {
-			curBlockHeight = 0
-		}else {
+
+	var lastScanBlockHeight int64
+	lastScanBlockIndex, err := db.Get("lastScanBlockIndex")
+	switch err {
+	case errors.ErrNotFound:
+		lastScanBlockHeight = 0
+	case nil:
+		if lastScanBlockHeight, err = strconv.ParseInt(string(lastScanBlockIndex), 10, 64); err != nil {
 			panic(err)
 		}
-	}else {
-		curBlockHeight, err  = strconv.ParseInt(string(gatherBlock), 10, 64)
-		if err != nil {
-			panic(err)
-		}
+	default:
+		panic(err)
 	}
 
+OUT:
 	for {
 		time.Sleep(1)
 		latestBlock, err := rpc.GetLatestBlockInfo()
 		if err != nil {
+			fmt.Fprintf(logFile, "%+v", err)
 			continue
 		}
-		if curBlockHeight < latestBlock.Height {
-			batch := db.NewBatch()
-			batch.Set("test",[]byte{})
 
-			txs, err := rpc.GetBlockTransactions(curBlockHeight)
+		if lastScanBlockHeight >= latestBlock.Height {
+			continue
+		}
+
+		batch := db.NewBatch()
+		txHashList, err := rpc.ListBlockTransactions(lastScanBlockHeight)
+		if err != nil {
+			fmt.Fprintf(logFile, "%+v", err)
+			continue
+		}
+		for _, txHash := range txHashList {
+			tx, err := rpc.GetTransaction(txHash)
 			if err != nil {
-				continue
+				fmt.Fprintf(logFile, "%+v", err)
+				continue OUT
 			}
-			for _, tx := range txs {
-				fmt.Println(tx)
-				// 交易是双向的，from 记录一条, to 记录一条
-				//key := fmt.Sprintf("%s-%s-%s", tx.SendingAddress, tx.PropertyId, tx.TxId)
-				//value := json.Mu
+			// 1. 存交易
+			key1 := fmt.Sprintf("%s-%d-%s", tx.SendingAddress, tx.PropertyId, tx.TxId)
+			key2 := fmt.Sprintf("%s-%d-%s", tx.ReferenceAddress, tx.PropertyId, tx.TxId)
+			value, err := json.Marshal(tx)
+			if err != nil {
+				fmt.Fprintf(logFile, "%+v", err)
+				continue OUT
 			}
+			batch.Set(key1, value).Set(key2, value)
 
-			if err = batch.Commit(); err != nil {
-				continue
+			// 2. 查余额，存余额
+			for _, addr := range []string{
+				tx.SendingAddress,
+				tx.ReferenceAddress,
+			} {
+				addrAllBalances, err := rpc.GetAllBalancesForAddress(addr)
+				if err != nil {
+					fmt.Fprintf(logFile, "%+v", err)
+					continue OUT
+				}
+				for _, one := range addrAllBalances {
+					key1 = fmt.Sprintf("%s-%d", addr, one.PropertyId)
+					if value, err = json.Marshal(one); err != nil {
+						fmt.Fprintf(logFile, "%+v", err)
+						continue OUT
+					}
+					batch.Set(key1, value)
+				}
 			}
 		}
 
+		if err = batch.Commit(); err != nil {
+			fmt.Fprintf(logFile, "%+v", err)
+			continue
+		}
+
+		if err = db.Set("lastScanBlockIndex", []byte(strconv.FormatInt(lastScanBlockHeight+1, 10))); err != nil {
+			fmt.Fprintf(logFile, "%+v", err)
+			continue
+		}
+		lastScanBlockHeight++
+		fmt.Fprintf(logFile, "================== hasScanBlockHeight: %d", lastScanBlockHeight)
 	}
 }

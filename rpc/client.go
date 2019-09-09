@@ -5,11 +5,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 )
 
-var DefaultClient = &RpcClient{
+var DefaultRpcClient = &RpcClient{
 	Host:   "127.0.0.1",
 	Port:   "8332",
 	Client: &http.Client{},
@@ -32,27 +33,27 @@ func (client *RpcClient) SendJsonRpc(method string, params ...interface{}) ([]by
 	}
 	data, err := json.Marshal(req)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "Marshal req failed")
 	}
 	request, err := http.NewRequest("POST", url, bytes.NewReader(data))
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "NewReq failed")
 	}
 	request.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte("togreat:cd32d5e86e")))
 
 	resp, err := client.Do(request)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "SendReq failed")
 	}
 	defer resp.Body.Close()
 	respData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "Read data from resp.Body failed")
 	}
 	commonResp := &CommonRpcResp{}
 	err = json.Unmarshal(respData, commonResp)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "Unmarshal data to CommonRpcResp failed")
 	}
 
 	return commonResp.result()
@@ -71,7 +72,7 @@ type rpcError struct {
 }
 
 func (e *rpcError) Error() string {
-	return fmt.Sprintf("%d: %s", e.Code, e.Message)
+	return fmt.Sprintf("errCode: %d, errMsg: %s", e.Code, e.Message)
 }
 
 type CommonRpcResp struct {
@@ -81,7 +82,7 @@ type CommonRpcResp struct {
 
 func (resp CommonRpcResp) result() ([]byte, error) {
 	if resp.Error != nil {
-		return []byte{}, resp.Error
+		return []byte{}, errors.Wrap(resp.Error,"unexpect jsonRpc Resp")
 	}
 	return json.Marshal(resp.Result)
 }
