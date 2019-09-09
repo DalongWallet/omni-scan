@@ -55,7 +55,7 @@ func (c *OmniClient) Exec(cmd command) ([]byte, error) {
 		return []byte{}, err
 	}
 
-	rpcResp := newRpcResponse()
+	var rpcResp rpcResponse
 	if err = json.Unmarshal(respBytes, &rpcResp); err != nil {
 		return []byte{}, err
 	}

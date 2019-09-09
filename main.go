@@ -43,7 +43,7 @@ func ScanData() {
 	defer db.Close()
 
 	var lastScanBlockHeight int64
-	lastScanBlockIndex, err := db.Get("lastScanBlockIndex")
+	lastScanBlockIndex, err := db.Get("hasScanedBlockHeight")
 	switch err {
 	case errors.ErrNotFound:
 		lastScanBlockHeight = 250000
@@ -125,13 +125,13 @@ OUT:
 				continue
 			}
 
-			if err = db.Set("lastScanBlockIndex", []byte(strconv.FormatInt(endScanBlockHeight, 10))); err != nil {
+			if err = db.Set("hasScanedBlockHeight", []byte(strconv.FormatInt(endScanBlockHeight, 10))); err != nil {
 				fmt.Fprintf(logFile, "%+v \n", err)
 				continue
 			}
 		}
 
-		fmt.Fprintf(logFile, "hasScanBlockHeight: %d, recordNums: %d, use: %s \n", endScanBlockHeight, recordNums, time.Since(start).String())
+		fmt.Fprintf(logFile, "hasScanedBlockHeight: %d, recordNums: %d, use: %s \n", endScanBlockHeight, recordNums, time.Since(start).String())
 
 		if endScanBlockHeight + increment - latestBlock.BlockHeight > 0 {
 			increment = latestBlock.BlockHeight - endScanBlockHeight
