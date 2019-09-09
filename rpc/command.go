@@ -12,40 +12,23 @@ type command interface {
 }
 
 func marshalCmd(cmd command) ([]byte, error) {
-	rawCmd, err := newRpcRequest(cmd)
-	if err != nil {
-		return nil, err
-	}
-
-	return json.Marshal(rawCmd)
+	return json.Marshal(newRpcRequest(cmd))
 }
 
 type rpcReqeust struct {
 	ID      string            `json:"id"`
 	JsonRPC string            `json:"jsonrpc"`
 	Method  string            `json:"method"`
-	Params  []json.RawMessage `json:"params"`
+	Params  []interface{}     `json:"params"`
 }
 
-func newRpcRequest(cmd command) (*rpcReqeust, error) {
-	params := cmd.Params()
-	rawParams := make([]json.RawMessage, len(params))
-
-	for i := range params {
-		msg, err := json.Marshal(params[i])
-		if err != nil {
-			return nil, err
-		}
-
-		rawParams[i] = json.RawMessage(msg)
-	}
-
+func newRpcRequest(cmd command) (*rpcReqeust) {
 	return &rpcReqeust{
 		ID:      cmd.ID(),
 		JsonRPC: "2.0",
 		Method:  cmd.Method(),
-		Params:  rawParams,
-	}, nil
+		Params:  cmd.Params(),
+	}
 }
 
 type rpcResponse struct {
