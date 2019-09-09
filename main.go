@@ -124,7 +124,7 @@ OUT:
 			fmt.Fprintf(logFile, "%+v \n", err)
 			continue
 		}
-		lastScanBlockHeight++
 		fmt.Fprintf(logFile, "================== hasScanBlockHeight: %d, recordNums: %d, use: %s \n", lastScanBlockHeight, recordNums, time.Since(start).String())
+		lastScanBlockHeight++
 	}
 }
