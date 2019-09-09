@@ -75,7 +75,6 @@ func (b *Batch) Delete(key string) *Batch {
 }
 
 func (b *Batch) Len() int {
-	b.batch.Reset()
 	return b.batch.Len()
 }
 

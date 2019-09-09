@@ -68,6 +68,9 @@ OUT:
 			continue
 		}
 
+		var recordNums int
+		start := time.Now()
+
 		batch := db.NewBatch()
 		txHashList, err := rpc.ListBlockTransactions(lastScanBlockHeight)
 		if err != nil {
@@ -110,6 +113,7 @@ OUT:
 				}
 			}
 		}
+		recordNums = batch.Len()
 
 		if err = batch.Commit(); err != nil {
 			fmt.Fprintf(logFile, "%+v \n", err)
@@ -121,6 +125,6 @@ OUT:
 			continue
 		}
 		lastScanBlockHeight++
-		fmt.Fprintf(logFile, "================== hasScanBlockHeight: %d \n", lastScanBlockHeight)
+		fmt.Fprintf(logFile, "================== hasScanBlockHeight: %d, recordNums: %d, use: %d \n", lastScanBlockHeight, recordNums, time.Since(start))
 	}
 }
