@@ -3,7 +3,6 @@ package rpc
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 )
 
 type command interface {
@@ -60,7 +59,7 @@ func newRpcResponse() *rpcResponse {
 
 func (resp *rpcResponse) result() ([]byte, error) {
 	if resp.Error != nil {
-		return []byte{}, errors.Wrap(resp.Error, "unexpect jsonRpc Resp")
+		return []byte{}, resp.Error
 	}
 	return json.Marshal(resp.Result)
 }

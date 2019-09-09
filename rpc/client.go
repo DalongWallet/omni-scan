@@ -3,7 +3,6 @@ package rpc
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -38,7 +37,7 @@ func (c *OmniClient) Exec(cmd command) ([]byte, error) {
 
 	req, err := http.NewRequest(http.MethodPost, "http://"+c.config.Host, bytes.NewReader(body))
 	if err != nil {
-		return nil, errors.Wrap(err, "New request failed")
+		return []byte{}, err
 	}
 
 	req.Close = true
@@ -47,19 +46,18 @@ func (c *OmniClient) Exec(cmd command) ([]byte, error) {
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, errors.Wrap(err, "SendReq failed")
+		return []byte{}, err
 	}
 	defer resp.Body.Close()
 
 	respBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, errors.Wrap(err, "Read data from resp.Body failed")
+		return []byte{}, err
 	}
 
 	rpcResp := newRpcResponse()
-	err = json.Unmarshal(respBytes, &rpcResp)
-	if err != nil {
-		return nil, errors.Wrap(err, "Unmarshal data to CommonRpcResp failed")
+	if err = json.Unmarshal(respBytes, &rpcResp); err != nil {
+		return []byte{}, err
 	}
 
 	return rpcResp.result()
