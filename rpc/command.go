@@ -3,10 +3,11 @@ package rpc
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 )
 
 type command interface {
-	ID()     int
+	ID() int
 	Method() string
 	Params() []interface{}
 }
@@ -16,13 +17,13 @@ func marshalCmd(cmd command) ([]byte, error) {
 }
 
 type rpcReqeust struct {
-	ID      int            `json:"id"`
-	JsonRPC string            `json:"jsonrpc"`
-	Method  string            `json:"method"`
-	Params  []interface{}     `json:"params"`
+	ID      int           `json:"id"`
+	JsonRPC string        `json:"jsonrpc"`
+	Method  string        `json:"method"`
+	Params  []interface{} `json:"params"`
 }
 
-func newRpcRequest(cmd command) (*rpcReqeust) {
+func newRpcRequest(cmd command) *rpcReqeust {
 	return &rpcReqeust{
 		ID:      cmd.ID(),
 		JsonRPC: "2.0",
@@ -36,11 +37,13 @@ type rpcResponse struct {
 	Error  *rpcError       `json:"error"`
 }
 
-func (resp *rpcResponse) result() ([]byte, error) {
+func (resp *rpcResponse) result() (result []byte, err error) {
 	if resp.Error != nil {
-		return []byte{}, resp.Error
+		return []byte{}, errors.Wrap(resp.Error, "Rpc BadResponse")
 	}
-	return json.Marshal(resp.Result)
+	result, err = json.Marshal(resp.Result)
+	err = errors.Wrap(err, "Marshal Rpc Response.Result failed")
+	return
 }
 
 type rpcError struct {

@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"encoding/json"
+	"github.com/pkg/errors"
 	"omni-scan/models"
 )
 
@@ -19,12 +20,12 @@ func (client *OmniClient) GetLatestBlockInfo() (block models.OmniInfoResult, err
 		return block, err
 	}
 
-	err = json.Unmarshal(result, &block)
+	err = unmarshal(result, &block, "GetLatestBlockInfo")
 	return
 }
 
 // index can be block height or block index
-func (client *OmniClient) ListBlockTransactions(index int)(txIdList []string, err error) {
+func (client *OmniClient) ListBlockTransactions(index int) (txIdList []string, err error) {
 	cmd := ListBlockTransactionsCommand{
 		Index: index,
 	}
@@ -34,14 +35,14 @@ func (client *OmniClient) ListBlockTransactions(index int)(txIdList []string, er
 		return txIdList, err
 	}
 
-	err = json.Unmarshal(result, &txIdList)
+	err = unmarshal(result, &txIdList, "ListBlockTransactions")
 	return
 }
 
-func (client *OmniClient) ListBlocksTransactions(firstBlock, lastBlock int64)(txIdList []string, err error) {
+func (client *OmniClient) ListBlocksTransactions(firstBlock, lastBlock int64) (txIdList []string, err error) {
 	cmd := ListBlocksTransactionsCommand{
 		FirstBlock: firstBlock,
-		LastBlock: lastBlock,
+		LastBlock:  lastBlock,
 	}
 
 	var result []byte
@@ -49,12 +50,11 @@ func (client *OmniClient) ListBlocksTransactions(firstBlock, lastBlock int64)(tx
 		return txIdList, err
 	}
 
-	err = json.Unmarshal(result, &txIdList)
+	err = unmarshal(result, &txIdList, "ListBlocksTransactions")
 	return
 }
 
-
-func (client *OmniClient) GetTransaction(txId string)(tx models.Transaction, err error) {
+func (client *OmniClient) GetTransaction(txId string) (tx models.Transaction, err error) {
 	cmd := GetTransactionCommand{
 		TxId: txId,
 	}
@@ -64,7 +64,7 @@ func (client *OmniClient) GetTransaction(txId string)(tx models.Transaction, err
 		return
 	}
 
-	err = json.Unmarshal(result, &tx)
+	err = unmarshal(result, &tx, "GetTransaction")
 	return
 }
 
@@ -79,13 +79,13 @@ func (client *OmniClient) GetBalance(address string, propertyId int) (tokenBalan
 		return
 	}
 
-	err = json.Unmarshal(result, &tokenBalance)
+	err = unmarshal(result, &tokenBalance, "GetBalance")
 	return
 }
 
 func (client *OmniClient) GetAllBalancesForId(propertyId int) (addrTokenBalanceList []models.AddressTokenBalance, err error) {
 	cmd := GetAllbalancesForIdCommand{
-		PropertyId:propertyId,
+		PropertyId: propertyId,
 	}
 
 	var result []byte
@@ -93,13 +93,13 @@ func (client *OmniClient) GetAllBalancesForId(propertyId int) (addrTokenBalanceL
 		return
 	}
 
-	err = json.Unmarshal(result, &addrTokenBalanceList)
+	err = unmarshal(result, &addrTokenBalanceList, "GetAllBalancesForId")
 	return
 }
 
 func (client *OmniClient) GetAllBalancesForAddress(address string) (propertyTokenBalanceList []models.PropertyTokenBalance, err error) {
 	cmd := GetAllBalancesForAddressCommand{
-		Address:address,
+		Address: address,
 	}
 
 	var result []byte
@@ -107,6 +107,10 @@ func (client *OmniClient) GetAllBalancesForAddress(address string) (propertyToke
 		return
 	}
 
-	err = json.Unmarshal(result, &propertyTokenBalanceList)
+	err = unmarshal(result, &propertyTokenBalanceList, "GetAllBalancesForAddress")
 	return
+}
+
+func unmarshal(data []byte, v interface{}, errMsg string) error {
+	return errors.Wrap(json.Unmarshal(data, &v), errMsg)
 }

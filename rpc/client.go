@@ -3,6 +3,7 @@ package rpc
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -32,12 +33,12 @@ type OmniClient struct {
 func (c *OmniClient) Exec(cmd command) ([]byte, error) {
 	body, err := marshalCmd(cmd)
 	if err != nil {
-		return []byte{}, err
+		return []byte{}, errors.Wrapf(err, "marshalCmd [%s] failed", cmd.Method())
 	}
 
 	req, err := http.NewRequest(http.MethodPost, "http://"+c.config.Host, bytes.NewReader(body))
 	if err != nil {
-		return []byte{}, err
+		return []byte{}, errors.Wrapf(err, "NewRequest failed, post body「 %s 」", string(body))
 	}
 
 	req.Close = true
@@ -46,24 +47,24 @@ func (c *OmniClient) Exec(cmd command) ([]byte, error) {
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return []byte{}, err
+		return []byte{}, errors.Wrap(err, "SendRequest failed")
 	}
 	defer resp.Body.Close()
 
 	respBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return []byte{}, err
+		return []byte{}, errors.Wrap(err, "Read resp.Body failed")
 	}
 
 	var rpcResp rpcResponse
 	if err = json.Unmarshal(respBytes, &rpcResp); err != nil {
-		return []byte{}, err
+		return []byte{}, errors.Wrapf(err, "Unmarshal data「 %s 」to rpcResp failed", string(respBytes))
 	}
 
 	return rpcResp.result()
 }
 
-func NewOmniClient(config *ConnConfig) (*OmniClient) {
+func NewOmniClient(config *ConnConfig) *OmniClient {
 	return &OmniClient{
 		config:     config,
 		httpClient: newHTTPClient(),
