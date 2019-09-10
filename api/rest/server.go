@@ -3,13 +3,15 @@ package rest
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"net/http"
+	"omni-scan/logic"
 )
 
 type Server struct {
-	httpServer  	*http.Server
+	httpServer *http.Server
+	mgr        *logic.OmniMgr
 }
 
 func NewHttpServer(port int) *Server {
@@ -18,11 +20,11 @@ func NewHttpServer(port int) *Server {
 
 	addr := fmt.Sprintf("127.0.0.1:%d", port)
 	httpServer := &http.Server{
-		Addr: 		addr,
-		Handler: 	engin,
+		Addr:    addr,
+		Handler: engin,
 	}
 	server := &Server{
-		httpServer: 		httpServer,
+		httpServer: httpServer,
 	}
 	server.initRouter(engin)
 
@@ -30,6 +32,8 @@ func NewHttpServer(port int) *Server {
 }
 
 func (s *Server) Run() {
+	logrus.Print("Start omni-scan REST api service")
+
 	err := s.httpServer.ListenAndServe()
 	if err != nil {
 		logrus.Error("RestServer.Run %s", err)
@@ -43,4 +47,3 @@ func (s *Server) Stop() {
 func (s *Server) initRouter(r gin.IRouter) {
 	r.GET("/api/v1/txs", s.GetConfirmedAddressTransactions)
 }
-

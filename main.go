@@ -3,8 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/judwhite/go-svc/svc"
+	"github.com/mitchellh/cli"
 	"github.com/syndtr/goleveldb/leveldb/errors"
+	"log"
 	"omni-scan/api/rest"
 	"omni-scan/rpc"
 	"omni-scan/storage/leveldb"
@@ -13,23 +14,21 @@ import (
 	"time"
 )
 
-type program struct {
-}
-
 func main() {
-	if len(os.Args) > 1 {
-		ScanData()
-	}else {
-		rest.NewHttpServer(80)
+	c := cli.NewCLI("omni-scan", "0.0.1")
+	c.Args = os.Args[1:]
+	c.Commands = map[string]cli.CommandFactory{
+		//"ScanData":   ScanData,
+		"RestApi":    RunRestApi,
 	}
+	exitStatus, err := c.Run()
+	if err != nil {
+		log.Println(err)
+	}
+	os.Exit(exitStatus)
 }
 
-func (program) Init(env svc.Environment) error {
-	fmt.Println("init...")
-	return nil
-}
-
-func ScanData() {
+func ScanData() (cli.Command, error) {
 	logFile, err := os.OpenFile("omni_data.log", os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		panic(err)
@@ -127,4 +126,8 @@ OUT:
 		fmt.Fprintf(logFile, "================== hasScanBlockHeight: %d, recordNums: %d, use: %s \n", lastScanBlockHeight, recordNums, time.Since(start).String())
 		lastScanBlockHeight++
 	}
+}
+
+func RunRestApi() (cli.Command, error) {
+	return rest.New(), nil
 }
