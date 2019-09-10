@@ -29,7 +29,7 @@ func main() {
 }
 
 func ScanData() (cli.Command, error) {
-	logFile, err := os.OpenFile("omni_data.log", os.O_RDWR|os.O_CREATE, 0666)
+	logFile, err := os.OpenFile("omni_scan.log", os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		panic(err)
 	}
@@ -42,10 +42,10 @@ func ScanData() (cli.Command, error) {
 	defer db.Close()
 
 	var lastScanBlockHeight int64
-	lastScanBlockIndex, err := db.Get("lastScanBlockIndex")
+	lastScanBlockIndex, err := db.Get("hasScanedBlockHeight")
 	switch err {
 	case errors.ErrNotFound:
-		lastScanBlockHeight = 0
+		lastScanBlockHeight = 250000
 	case nil:
 		if lastScanBlockHeight, err = strconv.ParseInt(string(lastScanBlockIndex), 10, 64); err != nil {
 			panic(err)
@@ -54,77 +54,91 @@ func ScanData() (cli.Command, error) {
 		panic(err)
 	}
 
+
+
+	client := rpc.DefaultOmniClient
+
+	var increment int64 = 1000
 OUT:
 	for {
 		time.Sleep(1)
-		latestBlock, err := rpc.GetLatestBlockInfo()
+		latestBlock, err := client.GetLatestBlockInfo()
 		if err != nil {
 			fmt.Fprintf(logFile, "%+v \n", err)
 			continue
 		}
 
-		if lastScanBlockHeight >= latestBlock.Height {
+		if lastScanBlockHeight > latestBlock.BlockHeight {
 			continue
 		}
-
-		var recordNums int
-		start := time.Now()
 
 		batch := db.NewBatch()
-		txHashList, err := rpc.ListBlockTransactions(lastScanBlockHeight)
+		recordNums := 0	
+		start := time.Now()
+		startScanBlockHeight, endScanBlockHeight := lastScanBlockHeight, lastScanBlockHeight + increment
+
+		txIdList, err := client.ListBlocksTransactions(startScanBlockHeight, endScanBlockHeight)
 		if err != nil {
 			fmt.Fprintf(logFile, "%+v \n", err)
-			continue
+			continue	
 		}
-		for _, txHash := range txHashList {
-			tx, err := rpc.GetTransaction(txHash)
-			if err != nil {
-				fmt.Fprintf(logFile, "%+v \n", err)
-				continue OUT
-			}
-			// 1. 存交易
-			key1 := fmt.Sprintf("%s-%d-%s", tx.SendingAddress, tx.PropertyId, tx.TxId)
-			key2 := fmt.Sprintf("%s-%d-%s", tx.ReferenceAddress, tx.PropertyId, tx.TxId)
-			value, err := json.Marshal(tx)
-			if err != nil {
-				fmt.Fprintf(logFile, "%+v \n", err)
-				continue OUT
-			}
-			batch.Set(key1, value).Set(key2, value)
 
-			// 2. 查余额，存余额
-			for _, addr := range []string{
-				tx.SendingAddress,
-				tx.ReferenceAddress,
-			} {
-				addrAllBalances, err := rpc.GetAllBalancesForAddress(addr)
+		if len(txIdList) > 0 {
+			for _, txId := range txIdList {
+				tx, err := client.GetTransaction(txId)
 				if err != nil {
 					fmt.Fprintf(logFile, "%+v \n", err)
 					continue OUT
 				}
-				for _, one := range addrAllBalances {
-					key1 = fmt.Sprintf("%s-%d", addr, one.PropertyId)
-					if value, err = json.Marshal(one); err != nil {
+
+				key1 := fmt.Sprintf("%s-%d-%s", tx.SendingAddress, tx.PropertyId, tx.TxId)
+				key2 := fmt.Sprintf("%s-%d-%s", tx.ReferenceAddress, tx.PropertyId, tx.TxId)
+				value, err := json.Marshal(tx)
+				if err != nil {
+					fmt.Fprintf(logFile, "%+v \n", err)
+					continue OUT
+				}
+				batch.Set(key1, value).Set(key2, value)
+
+				for _, addr := range []string{
+					tx.SendingAddress,
+					tx.ReferenceAddress,
+				} {
+					addrAllBalances, err := client.GetAllBalancesForAddress(addr)
+					if err != nil {
 						fmt.Fprintf(logFile, "%+v \n", err)
 						continue OUT
 					}
-					batch.Set(key1, value)
+					for _, one := range addrAllBalances {
+						key1 = fmt.Sprintf("%s-%d", addr, one.PropertyId)
+						if value, err = json.Marshal(one); err != nil {
+							fmt.Fprintf(logFile, "%+v \n", err)
+							continue OUT
+						}
+						batch.Set(key1, value)
+					}
 				}
 			}
-		}
-		recordNums = batch.Len()
+			recordNums = batch.Len()
 
-		if err = batch.Commit(); err != nil {
-			fmt.Fprintf(logFile, "%+v \n", err)
-			continue
+			if err = batch.Commit(); err != nil {
+				fmt.Fprintf(logFile, "%+v \n", err)
+				continue
+			}
+
+			if err = db.Set("hasScanedBlockHeight", []byte(strconv.FormatInt(endScanBlockHeight, 10))); err != nil {
+				fmt.Fprintf(logFile, "%+v \n", err)
+				continue
+			}
 		}
 
-		if err = db.Set("lastScanBlockIndex", []byte(strconv.FormatInt(lastScanBlockHeight, 10))); err != nil {
-			fmt.Fprintf(logFile, "%+v \n", err)
-			continue
+		fmt.Fprintf(logFile, "hasScanedBlockHeight: %d, recordNums: %d, use: %s \n", endScanBlockHeight, recordNums, time.Since(start).String())
+
+		if endScanBlockHeight + increment - latestBlock.BlockHeight > 0 {
+			increment = latestBlock.BlockHeight - endScanBlockHeight
 		}
-		fmt.Fprintf(logFile, "================== hasScanBlockHeight: %d, recordNums: %d, use: %s \n", lastScanBlockHeight, recordNums, time.Since(start).String())
-		lastScanBlockHeight++
+
+		lastScanBlockHeight = endScanBlockHeight + 1
 	}
 }
 
