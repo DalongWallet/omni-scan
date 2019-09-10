@@ -11,18 +11,39 @@ import (
 	"strconv"
 	"time"
 	"omni-scan/storage/leveldb"
+	"github.com/mitchellh/cli"
 )
 
+
+func New() *cmd {
+	return &cmd{}
+}
+
+type cmd struct{}
+
+func (c *cmd) Run(args []string) int {
+	ScanData()
+	return cli.RunResultHelp
+}
+
+func (c *cmd) Synopsis() string {
+	return ""
+}
+
+func (c *cmd) Help() string {
+	return ""
+}
+
 func ScanData() {
-	infoLogFile := mustOpenFile("scan_info.log")
+	infoLogFile := mustOpenFile("../scan_info.log")
 	defer infoLogFile.Close()
 	infoLogger := newLogger(infoLogFile, logrus.InfoLevel)
 
-	errLogFile := mustOpenFile("scan_err.log")
+	errLogFile := mustOpenFile("../scan_err.log")
 	defer errLogFile.Close()
 	errLogger := newLogger(errLogFile, logrus.ErrorLevel)
 
-	db, err := leveldb.Open("./omni_db")
+	db, err := leveldb.Open("../omni_db")
 	if err != nil {
 		panic(err)
 	}
@@ -40,8 +61,6 @@ func ScanData() {
 	default:
 		panic(err)
 	}
-
-
 
 	client := rpc.DefaultOmniClient
 

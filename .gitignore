@@ -22,3 +22,5 @@ testdb
 ig_*
 zzzig_*
 omni_db
+scan_info.log
+scan_err.log
