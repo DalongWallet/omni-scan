@@ -79,7 +79,6 @@ OUT:
 			continue
 		}
 
-		batch := db.NewBatch()
 		recordNums := 0
 		start := time.Now()
 
@@ -91,6 +90,7 @@ OUT:
 		}
 
 		if len(txIdList) > 0 {
+			batch := db.NewBatch()
 			for _, txId := range txIdList {
 				tx, err := client.GetTransaction(txId)
 				if err != nil {
