@@ -8,6 +8,37 @@ import (
 
 const OmniPropertyUSDT = 31
 
+func (s *Server) GetBlocksTxHashList(c *gin.Context) {
+	startStr := c.Query("start")
+	endStr := c.Query("end")
+	start, _ := strconv.Atoi(startStr)
+	end, _ := strconv.Atoi(endStr)
+
+	hashList, err := s.omniCli.RpcClient.ListBlocksTransactions(int64(start), int64(end))
+	if err != nil {
+		RespJson(c, InternalServerError, err.Error())
+		return
+	}
+
+	RespJson(c, OK, hashList)
+}
+
+func (s *Server) GetTransactionById(c *gin.Context) {
+	txId := c.Query("tx")
+	if txId == "" {
+		RespJson(c, BadRequest, "require tx")
+		return
+	}
+
+	tx, err := s.omniCli.RpcClient.GetTransaction(txId)
+	if err != nil {
+		RespJson(c, InternalServerError, err.Error())
+		return
+	}
+
+	RespJson(c, OK, tx)
+}
+
 func (s *Server) GetAddressBalance(c *gin.Context) {
 	addr := c.Query("address")
 	if addr == "" {

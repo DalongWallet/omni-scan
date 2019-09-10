@@ -21,8 +21,6 @@ func main() {
 	os.Exit(exitStatus)
 }
 
-
-
 func RunRestApi() (cli.Command, error) {
 	return rest.New(), nil
 }
