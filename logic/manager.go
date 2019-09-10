@@ -10,14 +10,14 @@ type TxGetter interface {
 }
 
 // TODO pending tx collect
-type TxMgr struct {
+type OmniMgr struct {
 	//UnconfirmedBlock 	*UnconfirmedBlockMgr
 	ConfirmedTx *ConfirmedTxMgr
 	MemPool     *MemPoolMgr
 }
 
-func NewTxMgr(st storage.Storage, mempoolSize int) (*TxMgr, error) {
-	m := &TxMgr{}
+func NewOmniMgr(st storage.Storage, mempoolSize int) (*OmniMgr, error) {
+	m := &OmniMgr{}
 	cfBlock, err := NewConfirmedBlockMgr(st)
 	if err != nil {
 		return nil, err
@@ -27,11 +27,21 @@ func NewTxMgr(st storage.Storage, mempoolSize int) (*TxMgr, error) {
 	return m, nil
 }
 
-func (m *TxMgr) GetTx(txid string) (*models.Transaction, error) {
+func (m *OmniMgr) GetTx(txid string) (*models.Transaction, error) {
 	tx, err := m.ConfirmedTx.GetTx(txid)
-	if err != nil {
-		return nil, models.ErrorNotFound
+	if err == nil {
+		return tx, nil
 	}
-	return tx, nil
+	return nil, models.ErrorNotFound
 }
+
+func (m *OmniMgr) GetAddressConfirmedTxs(address string, limit uint, offset uint) ([]*models.Transaction, error) {
+	var out []*models.Transaction
+	return out, nil
+}
+
+func (m *OmniMgr) GetAddressBalance(address string, propertyId int) (*models.AddressTokenBalance, error) {
+	return nil, nil
+}
+
 

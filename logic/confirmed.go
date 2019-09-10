@@ -44,7 +44,7 @@ func (m *ConfirmedTxMgr) SaveTx(tx *models.Transaction) error {
 	return err
 }
 
-func (m *ConfirmedTxMgr) GetAddressTxs(addr string, limit uint, order int, prevMinKey, prevMaxKey string) {
+func (m *ConfirmedTxMgr) GetAddressTxs(addr string, limit uint, order int, preKey string) {
 
 }
 
