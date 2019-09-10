@@ -11,6 +11,7 @@ import (
 	"os"
 	"strconv"
 	"time"
+	log "github.com/sirupsen/logrus"
 )
 
 type program struct {
@@ -30,11 +31,32 @@ func (program) Init(env svc.Environment) error {
 }
 
 func ScanData() {
-	logFile, err := os.OpenFile("omni_scan.log", os.O_RDWR|os.O_CREATE, 0666)
+	infoLogger := log.New()
+	infoLogFile, err := os.OpenFile("scan_info.log", os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		panic(err)
 	}
-	defer logFile.Close()
+	defer infoLogFile.Close()
+	infoLogger.SetOutput(infoLogFile)
+	infoLogger.SetLevel(log.InfoLevel)
+
+	errLogger := log.New()
+	errLogFile, err := os.OpenFile("scan_err.log", os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		panic(err)
+	}
+	defer errLogFile.Close()
+	errLogger.SetOutput(errLogFile)
+	errLogger.SetLevel(log.ErrorLevel)
+
+	formatter := &log.TextFormatter{
+		ForceColors:     true,
+		TimestampFormat: "2006-01-02 03:04:05",
+		FullTimestamp:true,
+	}
+	infoLogger.SetFormatter(formatter)
+	errLogger.SetFormatter(formatter)
+
 
 	db, err := leveldb.Open("./omni_db")
 	if err != nil {
@@ -65,7 +87,7 @@ OUT:
 		time.Sleep(1)
 		latestBlock, err := client.GetLatestBlockInfo()
 		if err != nil {
-			fmt.Fprintf(logFile, "%+v \n", err)
+			errLogger.Error(fmt.Sprintf("%+v \n\n", err))
 			continue
 		}
 
@@ -80,15 +102,15 @@ OUT:
 
 		txIdList, err := client.ListBlocksTransactions(startScanBlockHeight, endScanBlockHeight)
 		if err != nil {
-			fmt.Fprintf(logFile, "%+v \n", err)
-			continue	
+			errLogger.Error(fmt.Sprintf("%+v \n\n", err))
+			continue
 		}
 
 		if len(txIdList) > 0 {
 			for _, txId := range txIdList {
 				tx, err := client.GetTransaction(txId)
 				if err != nil {
-					fmt.Fprintf(logFile, "%+v \n", err)
+					errLogger.Error(fmt.Sprintf("%+v \n\n", err))
 					continue OUT
 				}
 
@@ -96,7 +118,7 @@ OUT:
 				key2 := fmt.Sprintf("%s-%d-%s", tx.ReferenceAddress, tx.PropertyId, tx.TxId)
 				value, err := json.Marshal(tx)
 				if err != nil {
-					fmt.Fprintf(logFile, "%+v \n", err)
+					errLogger.Error(fmt.Sprintf("%+v \n\n", err))
 					continue OUT
 				}
 				batch.Set(key1, value).Set(key2, value)
@@ -107,13 +129,13 @@ OUT:
 				} {
 					addrAllBalances, err := client.GetAllBalancesForAddress(addr)
 					if err != nil {
-						fmt.Fprintf(logFile, "%+v \n", err)
+						errLogger.Error(fmt.Sprintf("%+v \n\n", err))
 						continue OUT
 					}
 					for _, one := range addrAllBalances {
 						key1 = fmt.Sprintf("%s-%d", addr, one.PropertyId)
 						if value, err = json.Marshal(one); err != nil {
-							fmt.Fprintf(logFile, "%+v \n", err)
+							errLogger.Error(fmt.Sprintf("%+v \n\n", err))
 							continue OUT
 						}
 						batch.Set(key1, value)
@@ -123,17 +145,17 @@ OUT:
 			recordNums = batch.Len()
 
 			if err = batch.Commit(); err != nil {
-				fmt.Fprintf(logFile, "%+v \n", err)
+				errLogger.Error(fmt.Sprintf("%+v \n\n", err))
 				continue
 			}
 
 			if err = db.Set("hasScanedBlockHeight", []byte(strconv.FormatInt(endScanBlockHeight, 10))); err != nil {
-				fmt.Fprintf(logFile, "%+v \n", err)
+				errLogger.Error(fmt.Sprintf("%+v \n\n", err))
 				continue
 			}
 		}
 
-		fmt.Fprintf(logFile, "hasScanedBlockHeight: %d, recordNums: %d, use: %s \n", endScanBlockHeight, recordNums, time.Since(start).String())
+		infoLogger.Info(fmt.Sprintf("hasScanedBlockHeight: %d, recordNums: %d, use: %s \n", endScanBlockHeight, recordNums, time.Since(start).String()))
 
 		if endScanBlockHeight + increment - latestBlock.BlockHeight > 0 {
 			increment = latestBlock.BlockHeight - endScanBlockHeight
