@@ -22,7 +22,6 @@ func main() {
 	os.Exit(exitStatus)
 }
 
-
 func ScanData() (cli.Command, error) {
  	return scan.New(), nil
 }
