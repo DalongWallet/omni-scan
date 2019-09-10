@@ -11,41 +11,61 @@ import (
 	"strconv"
 	"time"
 	"omni-scan/storage/leveldb"
+	"github.com/mitchellh/cli"
 )
 
+
+func New() *cmd {
+	return &cmd{}
+}
+
+type cmd struct{}
+
+func (c *cmd) Run(args []string) int {
+	ScanData()
+	return cli.RunResultHelp
+}
+
+func (c *cmd) Synopsis() string {
+	return ""
+}
+
+func (c *cmd) Help() string {
+	return ""
+}
+
 func ScanData() {
-	infoLogFile := mustOpenFile("scan_info.log")
+	infoLogFile := mustOpenFile("../scan_info.log")
 	defer infoLogFile.Close()
 	infoLogger := newLogger(infoLogFile, logrus.InfoLevel)
 
-	errLogFile := mustOpenFile("scan_err.log")
+	errLogFile := mustOpenFile("../scan_err.log")
 	defer errLogFile.Close()
 	errLogger := newLogger(errLogFile, logrus.ErrorLevel)
 
-	db, err := leveldb.Open("./omni_db")
+	db, err := leveldb.Open("../omni_db")
 	if err != nil {
 		panic(err)
 	}
 	defer db.Close()
 
-	var lastScanBlockHeight int64
-	lastScanBlockIndex, err := db.Get("hasScanedBlockHeight")
+	var hasScanedBlockHeight int64
+	hasScanedBlockIndex, err := db.Get("hasScanedBlockHeight")
 	switch err {
 	case errors.ErrNotFound:
-		lastScanBlockHeight = 250000
+		hasScanedBlockHeight = 250000
 	case nil:
-		if lastScanBlockHeight, err = strconv.ParseInt(string(lastScanBlockIndex), 10, 64); err != nil {
+		if hasScanedBlockHeight, err = strconv.ParseInt(string(hasScanedBlockIndex), 10, 64); err != nil {
 			panic(err)
 		}
 	default:
 		panic(err)
 	}
 
-
-
 	client := rpc.DefaultOmniClient
 
 	var increment int64 = 1000
+	startScanBlockHeight, endScanBlockHeight := hasScanedBlockHeight, hasScanedBlockHeight + increment
 OUT:
 	for {
 		time.Sleep(1)
@@ -55,14 +75,14 @@ OUT:
 			continue
 		}
 
-		if lastScanBlockHeight > latestBlock.BlockHeight {
+		if startScanBlockHeight > latestBlock.BlockHeight {
 			continue
 		}
 
 		batch := db.NewBatch()
 		recordNums := 0
 		start := time.Now()
-		startScanBlockHeight, endScanBlockHeight := lastScanBlockHeight, lastScanBlockHeight + increment
+
 
 		txIdList, err := client.ListBlocksTransactions(startScanBlockHeight, endScanBlockHeight)
 		if err != nil {
@@ -119,13 +139,13 @@ OUT:
 			}
 		}
 
-		infoLogger.Info(fmt.Sprintf("hasScanedBlockHeight: %d, recordNums: %d, use: %s \n", endScanBlockHeight, recordNums, time.Since(start).String()))
+		infoLogger.Info(fmt.Sprintf("hasScanedBlockHeight: %d, recordNums: %d, use: %s", endScanBlockHeight, recordNums, time.Since(start).String()))
 
-		if endScanBlockHeight + increment - latestBlock.BlockHeight > 0 {
+		if latestBlock.BlockHeight < endScanBlockHeight + increment  {
 			increment = latestBlock.BlockHeight - endScanBlockHeight
 		}
 
-		lastScanBlockHeight = endScanBlockHeight + 1
+		startScanBlockHeight, endScanBlockHeight  = endScanBlockHeight + 1, endScanBlockHeight + increment
 	}
 }
 

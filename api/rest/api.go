@@ -62,10 +62,7 @@ func (s *Server) GetConfirmedAddressTransactions(c *gin.Context) {
 		return
 	}
 
-	limitStr := c.Query("limit")
-	if limitStr == "" {
-		limitStr = "10"
-	}
+	limitStr := c.DefaultQuery("limit", "10")
 	offsetStr := c.Query("offset")
 
 	limit, _ := strconv.Atoi(limitStr)
