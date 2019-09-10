@@ -68,7 +68,7 @@ func ScanData() {
 	startScanBlockHeight, endScanBlockHeight := hasScanedBlockHeight, hasScanedBlockHeight + increment
 OUT:
 	for {
-		time.Sleep(1)
+		time.Sleep(5)
 		latestBlock, err := client.GetLatestBlockInfo()
 		if err != nil {
 			errLogger.Error(fmt.Sprintf("%+v \n\n", err))
