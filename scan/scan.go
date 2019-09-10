@@ -35,15 +35,15 @@ func (c *cmd) Help() string {
 }
 
 func ScanData() {
-	infoLogFile := mustOpenFile("../scan_info.log")
+	infoLogFile := mustOpenFile("./scan_info.log")
 	defer infoLogFile.Close()
 	infoLogger := newLogger(infoLogFile, logrus.InfoLevel)
 
-	errLogFile := mustOpenFile("../scan_err.log")
+	errLogFile := mustOpenFile("./scan_err.log")
 	defer errLogFile.Close()
 	errLogger := newLogger(errLogFile, logrus.ErrorLevel)
 
-	db, err := leveldb.Open("../omni_db")
+	db, err := leveldb.Open("./omni_db")
 	if err != nil {
 		panic(err)
 	}
