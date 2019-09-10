@@ -105,6 +105,38 @@ func (client *OmniClient) GetAllBalancesForAddress(address string) (propertyToke
 	return
 }
 
+func (client *OmniClient) SendRawTransaction(from string, hex string) (txHash string, err error) {
+	cmd := SendRawTransactionCommand {
+		FromAddress: 	from,
+		Hex: 			hex,
+	}
+
+	var result []byte
+	if result, err = client.Exec(cmd); err != nil {
+		return
+	}
+
+	return string(result), nil
+}
+
+func (client *OmniClient) DecodeTransaction(rawtx string) (tx models.Transaction, err error){
+	cmd := DecodeRawTransactionCommand {
+		RawTx: 				rawtx,
+	}
+
+	var result []byte
+	if result, err = client.Exec(cmd); err != nil {
+		return
+	}
+
+	err = json.Unmarshal(result, &tx)
+	if err != nil {
+		return
+	}
+
+	return tx, nil
+}
+
 func unmarshal(data []byte, v interface{}, errMsg string) error {
 	return errors.Wrap(json.Unmarshal(data, &v), errMsg)
 }

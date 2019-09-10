@@ -7,11 +7,13 @@ import (
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"omni-scan/logic"
+	"omni-scan/omnicore"
 )
 
 type Server struct {
-	httpServer *http.Server
-	mgr        *logic.OmniMgr
+	httpServer 	*http.Server
+	mgr        	*logic.OmniMgr
+	omniCli 	*omnicore.Client
 }
 
 func NewHttpServer(port int) *Server {
