@@ -6,12 +6,6 @@ import (
 	"omni-scan/models"
 )
 
-type Block struct {
-	Height                 int64 `json:"block"`
-	Timestamp              int64 `json:"blocktime"`
-	OmniTransactionsAmount int64 `json:"blocktransactions"`
-}
-
 func (client *OmniClient) GetLatestBlockInfo() (block models.OmniInfoResult, err error) {
 	cmd := GetInfoCommand{}
 

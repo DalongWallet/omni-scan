@@ -55,6 +55,8 @@ func ScanData() {
 		panic(err)
 	}
 
+
+
 	client := rpc.DefaultOmniClient
 
 	var increment int64 = 1000
@@ -67,7 +69,7 @@ OUT:
 			continue
 		}
 
-		if lastScanBlockHeight >= latestBlock.BlockHeight {
+		if lastScanBlockHeight > latestBlock.BlockHeight {
 			continue
 		}
 
