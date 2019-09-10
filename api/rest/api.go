@@ -2,7 +2,6 @@ package rest
 
 import (
 	"github.com/gin-gonic/gin"
-	"omni-scan/models"
 	"strconv"
 	"strings"
 )
@@ -59,7 +58,23 @@ func (s *Server) PushRawTransaction(c *gin.Context) {
 		return
 	}
 
-	RespJson(c, OK, models.Transaction {
+	addr := c.Query("addr")
+	if addr == "" {
+		RespJson(c, BadRequest, "require sender address")
+		return
+	}
 
-	})
+	txHash, err := s.omniCli.RpcClient.SendRawTransaction(addr, hex)
+	if err != nil {
+		RespJson(c, BadRequest, err.Error())
+		return
+	}
+
+	tx, err := s.omniCli.RpcClient.DecodeTransaction(txHash)
+	if err != nil {
+		RespJson(c, BadRequest, err.Error())
+		return
+	}
+
+	RespJson(c, OK, tx)
 }
