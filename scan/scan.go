@@ -88,7 +88,6 @@ OUT:
 			time.Sleep(1)
 			continue
 		}
-		fmt.Println("got txIdList length:", len(txIdList))
 		if len(txIdList) > 0 {
 			batch := db.NewBatch()
 			for _, txId := range txIdList {
@@ -99,7 +98,6 @@ OUT:
 					continue OUT
 				}
 
-				fmt.Println("got Tx:", tx.TxId)
 				key1 := fmt.Sprintf("%s-%d-%s", tx.SendingAddress, tx.PropertyId, tx.TxId)
 				key2 := fmt.Sprintf("%s-%d-%s", tx.ReferenceAddress, tx.PropertyId, tx.TxId)
 				value, err := json.Marshal(tx)
@@ -109,20 +107,18 @@ OUT:
 					continue OUT
 				}
 				batch.Set(key1, value).Set(key2, value)
-				fmt.Println("set Tx Key finished")
+
 				for _, addr := range []string{
 					tx.SendingAddress,
 					tx.ReferenceAddress,
 				} {
-					fmt.Println(addr)
 					addrAllBalances, err := client.GetAllBalancesForAddress(addr)
 					if err != nil {
-						fmt.Println(err)
 						errLogger.Error(fmt.Sprintf("%+v \n\n", err))
 						time.Sleep(1)
 						continue OUT
 					}
-					fmt.Println("got Balance:",addr)
+
 					for _, one := range addrAllBalances {
 						key1 = fmt.Sprintf("%s-%d", addr, one.PropertyId)
 						if value, err = json.Marshal(one); err != nil {
@@ -141,7 +137,6 @@ OUT:
 				time.Sleep(1)
 				continue
 			}
-			fmt.Println("Commmit Data")
 
 			if err = db.Set("hasScannedBlockHeight", []byte(strconv.FormatInt(endScanBlockHeight, 10))); err != nil {
 				errLogger.Error(fmt.Sprintf("%+v \n\n", err))
@@ -178,37 +173,4 @@ func mustOpenFile(path string) *os.File {
 		panic(err)
 	}
 	return file
-}
-
-func ScanData1() {
-	startScanBlockHeight, endScanBlockHeight := int64(256000), int64(257000)
-	client := rpc.DefaultOmniClient
-	txIdList, err := client.ListBlocksTransactions(startScanBlockHeight, endScanBlockHeight)
-	if err != nil {
-		panic(err)
-	}
-	if len(txIdList) > 0 {
-		for _, txId := range txIdList {
-			tx, err := client.GetTransaction(txId)
-			if err != nil {
-			}
-			fmt.Printf("Tx: %+v \n", tx)
-			key1 := fmt.Sprintf("%s-%d-%s", tx.SendingAddress, tx.PropertyId, tx.TxId)
-			key2 := fmt.Sprintf("%s-%d-%s", tx.ReferenceAddress, tx.PropertyId, tx.TxId)
-			fmt.Printf("Transaction sending Key[%s]: %s \n  reference Key[%s]: %s", tx.SendingAddress, key1, tx.ReferenceAddress, key2)
-			for _, addr := range []string{
-				tx.SendingAddress,
-				tx.ReferenceAddress,
-			} {
-				addrAllBalances, err := client.GetAllBalancesForAddress(addr)
-				if err != nil {
-				panic(err)
-				}
-				for _, one := range addrAllBalances {
-					key1 = fmt.Sprintf("%s-%d", addr, one.PropertyId)
-					fmt.Printf("Balance: %+v \n Balance key: %s \n", one, key1)
-				}
-			}
-			}
-		}
 }
