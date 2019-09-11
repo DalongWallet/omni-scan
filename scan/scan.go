@@ -98,8 +98,8 @@ OUT:
 					continue OUT
 				}
 
-				key1 := fmt.Sprintf("%s-%d-%s", tx.SendingAddress, tx.PropertyId, tx.TxId)
-				key2 := fmt.Sprintf("%s-%d-%s", tx.ReferenceAddress, tx.PropertyId, tx.TxId)
+				key1 := fmt.Sprintf("tx-%s-%d-%s", tx.SendingAddress, tx.PropertyId, tx.TxId)
+				key2 := fmt.Sprintf("tx-%s-%d-%s", tx.ReferenceAddress, tx.PropertyId, tx.TxId)
 				value, err := json.Marshal(tx)
 				if err != nil {
 					errLogger.Error(fmt.Sprintf("%+v \n\n", err))
@@ -120,7 +120,7 @@ OUT:
 					}
 
 					for _, one := range addrAllBalances {
-						key1 = fmt.Sprintf("%s-%d", addr, one.PropertyId)
+						key1 = fmt.Sprintf("balance-%s-%d", addr, one.PropertyId)
 						if value, err = json.Marshal(one); err != nil {
 							errLogger.Error(fmt.Sprintf("%+v \n\n", err))
 							time.Sleep(1)
