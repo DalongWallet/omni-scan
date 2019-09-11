@@ -77,7 +77,7 @@ func (s *Server) GetConfirmedAddressTransactions(c *gin.Context) {
 	RespJson(c, OK, txs)
 }
 
-func (s *Server) PushRawTransaction(c *gin.Context) {
+func (s *Server) SendRawTransaction(c *gin.Context) {
 	hex := c.Query("txHex")
 	hex = strings.TrimSpace(hex)
 	hex = strings.TrimPrefix(hex, "0x")

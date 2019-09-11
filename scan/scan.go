@@ -3,17 +3,16 @@ package scan
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/mitchellh/cli"
 	"github.com/sirupsen/logrus"
 	"github.com/syndtr/goleveldb/leveldb/errors"
 	"io"
 	"omni-scan/rpc"
+	"omni-scan/storage/leveldb"
 	"os"
 	"strconv"
 	"time"
-	"omni-scan/storage/leveldb"
-	"github.com/mitchellh/cli"
 )
-
 
 func New() *cmd {
 	return &cmd{}
@@ -49,13 +48,13 @@ func ScanData() {
 	}
 	defer db.Close()
 
-	var hasScanedBlockHeight int64
-	hasScanedBlockIndex, err := db.Get("hasScanedBlockHeight")
+	var hasScannedBlockHeight int64
+	hasScannedBlockIndex, err := db.Get("hasScanedBlockHeight")
 	switch err {
 	case errors.ErrNotFound:
-		hasScanedBlockHeight = 250000
+		hasScannedBlockHeight = 250000
 	case nil:
-		if hasScanedBlockHeight, err = strconv.ParseInt(string(hasScanedBlockIndex), 10, 64); err != nil {
+		if hasScannedBlockHeight, err = strconv.ParseInt(string(hasScannedBlockIndex), 10, 64); err != nil {
 			panic(err)
 		}
 	default:
@@ -65,7 +64,7 @@ func ScanData() {
 	client := rpc.DefaultOmniClient
 
 	var increment int64 = 1000
-	startScanBlockHeight, endScanBlockHeight := hasScanedBlockHeight, hasScanedBlockHeight + increment
+	startScanBlockHeight, endScanBlockHeight := hasScannedBlockHeight, hasScannedBlockHeight+increment
 OUT:
 	for {
 		time.Sleep(5)
@@ -81,7 +80,6 @@ OUT:
 
 		recordNums := 0
 		start := time.Now()
-
 
 		txIdList, err := client.ListBlocksTransactions(startScanBlockHeight, endScanBlockHeight)
 		if err != nil {
@@ -141,23 +139,22 @@ OUT:
 
 		infoLogger.Info(fmt.Sprintf("hasScanedBlockHeight: %d, recordNums: %d, use: %s", endScanBlockHeight, recordNums, time.Since(start).String()))
 
-		if latestBlock.BlockHeight < endScanBlockHeight + increment  {
+		if latestBlock.BlockHeight < endScanBlockHeight+increment {
 			increment = latestBlock.BlockHeight - endScanBlockHeight
 		}
 
-		startScanBlockHeight, endScanBlockHeight  = endScanBlockHeight + 1, endScanBlockHeight + increment
+		startScanBlockHeight, endScanBlockHeight = endScanBlockHeight+1, endScanBlockHeight+increment
 	}
 }
 
-
-func newLogger(writer io.Writer, level logrus.Level) *logrus.Logger  {
+func newLogger(writer io.Writer, level logrus.Level) *logrus.Logger {
 	logger := logrus.New()
 	logger.SetOutput(writer)
 	logger.SetLevel(level)
 	logger.SetFormatter(&logrus.TextFormatter{
 		ForceColors:     true,
 		TimestampFormat: "2006-01-02 03:04:05",
-		FullTimestamp:true,
+		FullTimestamp:   true,
 	})
 	return logger
 }
