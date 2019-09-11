@@ -99,8 +99,10 @@ func (client *OmniClient) GetAllBalancesForAddress(address string) (propertyToke
 
 	var result []byte
 	if result, err = client.Exec(cmd); err != nil {
-		if reflect.DeepEqual(err, ErrAddressNotFound) {
-			err = nil
+		if rpcErr, ok := errors.Cause(err).(*rpcError); ok {
+			if reflect.DeepEqual(rpcErr, ErrAddressNotFound) {
+				err = nil
+			}
 		}
 		return
 	}
