@@ -14,7 +14,7 @@ type levelStorage struct {
 var LevelStoragePool = map[string]*levelStorage{}
 
 
-func GetLevelStorage(path string, opt*opt.Options) (storage *levelStorage) {
+func GetLevelDbStorage(path string, opt*opt.Options) (storage *levelStorage) {
 	var db *leveldb.DB
 
 	var err error

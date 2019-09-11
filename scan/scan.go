@@ -42,7 +42,7 @@ func ScanData() {
 	defer errLogFile.Close()
 	errLogger := newLogger(errLogFile, logrus.ErrorLevel)
 
-	db := leveldb.GetLevelStorage("./omni_db", nil)
+	db := leveldb.GetLevelDbStorage("./omni_db", nil)
 	defer db.Close()
 
 	var hasScannedBlockHeight int64
