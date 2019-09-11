@@ -20,7 +20,7 @@ func GetLevelDbStorage(path string, opt*opt.Options) (storage *levelStorage) {
 	var err error
 	storage = LevelStoragePool[path]
 
-	// storage has been created
+	// storage has been created before
 	if storage != nil {
 		if _, err = storage.DB.GetSnapshot(); err == nil {
 			// db has opened, return directly

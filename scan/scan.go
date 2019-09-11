@@ -26,7 +26,7 @@ func (c *cmd) Run(args []string) int {
 }
 
 func (c *cmd) Synopsis() string {
-	return ""
+	return "Scan Block Data And Save"
 }
 
 func (c *cmd) Help() string {
@@ -58,11 +58,10 @@ func ScanData() {
 		panic(err)
 	}
 
-	client := rpc.DefaultOmniClient
-
 	var increment int64 = 1000
+	client := rpc.DefaultOmniClient
 	startScanBlockHeight, endScanBlockHeight := hasScannedBlockHeight, hasScannedBlockHeight+increment
-OUT:
+
 	for {
 		latestBlock, err := client.GetLatestBlockInfo()
 		if err != nil {
@@ -91,14 +90,16 @@ OUT:
 		}
 		if len(txIdList) > 0 {
 			batch := db.NewBatch()
-			for _, txId := range txIdList {
+			txQueue := NewTaskQueue(txIdList)
+			for !txQueue.AllFinished() {
+				txId := txQueue.GetTask().Value
 				tx, err := client.GetTransaction(txId)
 				if err != nil {
 					if err.Error() != "Work queue depth exceeded" {
 						errLogger.Error(fmt.Sprintf("%+v \n\n", err))
 					}
 					time.Sleep(1)
-					continue OUT
+					continue
 				}
 
 				key1 := fmt.Sprintf("tx-%s-%d-%s", tx.SendingAddress, tx.PropertyId, tx.TxId)
@@ -107,34 +108,36 @@ OUT:
 				if err != nil {
 					errLogger.Error(fmt.Sprintf("%+v \n\n", err))
 					time.Sleep(1)
-					continue OUT
+					continue
 				}
 				batch.Set(key1, value).Set(key2, value)
 
-				for _, addr := range []string{
-					tx.SendingAddress,
-					tx.ReferenceAddress,
-				} {
+				addrQueue := NewTaskQueue([]string{tx.SendingAddress, tx.ReferenceAddress,})
+				for !addrQueue.AllFinished() {
+					addr := addrQueue.GetTask().Value
 					addrAllBalances, err := client.GetAllBalancesForAddress(addr)
 					if err != nil {
 						if err.Error() != "Work queue depth exceeded" {
 							errLogger.Error(fmt.Sprintf("%+v \n\n", err))
 						}
 						time.Sleep(1)
-						continue OUT
+						continue
 					}
-
 					for _, one := range addrAllBalances {
 						key1 = fmt.Sprintf("balance-%s-%d", addr, one.PropertyId)
 						if value, err = json.Marshal(one); err != nil {
 							errLogger.Error(fmt.Sprintf("%+v \n\n", err))
 							time.Sleep(1)
-							continue OUT
+							continue
 						}
 						batch.Set(key1, value)
 					}
+					addrQueue.MarkTaskDone()
 				}
+
+				txQueue.MarkTaskDone()
 			}
+
 			recordNums = batch.Len()
 
 			if err = batch.Commit(); err != nil {
