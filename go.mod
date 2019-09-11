@@ -1,4 +1,4 @@
-module github.com/DalongWallet/omni-scan
+module omni-scan
 
 go 1.12
 
