@@ -26,8 +26,17 @@ func (s *levelStorage) Get(key string) ([]byte, error)  {
 	return s.DB.Get([]byte(key), nil)
 }
 
+func (s *levelStorage) GetString(key string) (string, error) {
+	value, err := s.DB.Get([]byte(key), nil)
+	return string(value), err
+}
+
 func (s *levelStorage) Set(key string, value []byte) error {
 	return s.DB.Put([]byte(key), value,nil)
+}
+
+func (s *levelStorage) SetString(key string, value string) error {
+	return s.DB.Put([]byte(key), []byte(value), nil)
 }
 
 func iterateData(iter iterator.Iterator)  (data [][]byte, err error) {
