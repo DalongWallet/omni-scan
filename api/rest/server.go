@@ -6,8 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
-	"omni-scan/logic"
-	"omni-scan/omnicore"
+	"github.com/DalongWallet/omni-scan/logic"
+	"github.com/DalongWallet/omni-scan/omnicore"
 )
 
 type Server struct {

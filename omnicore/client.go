@@ -1,6 +1,6 @@
 package omnicore
 
-import "omni-scan/rpc"
+import "github.com/DalongWallet/omni-scan/rpc"
 
 type Client struct {
 	RpcClient  		*rpc.OmniClient

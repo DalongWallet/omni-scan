@@ -1,7 +1,7 @@
 package logic
 
 import (
-	"omni-scan/models"
+	"github.com/DalongWallet/omni-scan/models"
 	"sync"
 )
 

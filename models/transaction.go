@@ -1,6 +1,6 @@
 package models
 
-import "omni-scan/storage"
+import "github.com/DalongWallet/omni-scan/storage"
 
 /*
 {

@@ -3,7 +3,7 @@ package rpc
 import (
 	"encoding/json"
 	"github.com/pkg/errors"
-	"omni-scan/models"
+	"github.com/DalongWallet/omni-scan/models"
 	"reflect"
 )
 
