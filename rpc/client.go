@@ -55,6 +55,10 @@ func (c *OmniClient) Exec(cmd command) ([]byte, error) {
 		return []byte{}, errors.Wrap(err, "Read resp.Body failed")
 	}
 
+	if bytes.Equal(respBytes, []byte("Work queue depth exceeded")) {
+		return []byte{}, errors.New("Work queue depth exceeded")
+	}
+
 	var rpcResp rpcResponse
 	if err = json.Unmarshal(respBytes, &rpcResp); err != nil {
 		return []byte{}, errors.Wrapf(err, "Unmarshal data「 %s 」to rpcResp failed", string(respBytes))

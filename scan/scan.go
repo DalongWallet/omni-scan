@@ -66,7 +66,9 @@ OUT:
 	for {
 		latestBlock, err := client.GetLatestBlockInfo()
 		if err != nil {
-			errLogger.Error(fmt.Sprintf("%+v \n\n", err))
+			if err.Error() != "Work queue depth exceeded" {
+				errLogger.Error(fmt.Sprintf("%+v \n\n", err))
+			}
 			time.Sleep(1)
 			continue
 		}
@@ -81,7 +83,9 @@ OUT:
 		fmt.Println("scan:", startScanBlockHeight,"-", endScanBlockHeight)
 		txIdList, err := client.ListBlocksTransactions(startScanBlockHeight, endScanBlockHeight)
 		if err != nil {
-			errLogger.Error(fmt.Sprintf("%+v \n\n", err))
+			if err.Error() != "Work queue depth exceeded" {
+				errLogger.Error(fmt.Sprintf("%+v \n\n", err))
+			}
 			time.Sleep(1)
 			continue
 		}
@@ -90,7 +94,9 @@ OUT:
 			for _, txId := range txIdList {
 				tx, err := client.GetTransaction(txId)
 				if err != nil {
-					errLogger.Error(fmt.Sprintf("%+v \n\n", err))
+					if err.Error() != "Work queue depth exceeded" {
+						errLogger.Error(fmt.Sprintf("%+v \n\n", err))
+					}
 					time.Sleep(1)
 					continue OUT
 				}
@@ -111,7 +117,9 @@ OUT:
 				} {
 					addrAllBalances, err := client.GetAllBalancesForAddress(addr)
 					if err != nil {
-						errLogger.Error(fmt.Sprintf("%+v \n\n", err))
+						if err.Error() != "Work queue depth exceeded" {
+							errLogger.Error(fmt.Sprintf("%+v \n\n", err))
+						}
 						time.Sleep(1)
 						continue OUT
 					}
