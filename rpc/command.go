@@ -6,6 +6,13 @@ import (
 	"github.com/pkg/errors"
 )
 
+var (
+	ErrAddressNotFound = rpcError{
+		Code:    -8,
+		Message: "Address not found",
+	}
+)
+
 type command interface {
 	ID() int
 	Method() string
@@ -34,11 +41,11 @@ func newRpcRequest(cmd command) *rpcReqeust {
 
 type rpcResponse struct {
 	Result json.RawMessage `json:"result"`
-	Error  *rpcError       `json:"error"`
+	Error  rpcError       `json:"error"`
 }
 
 func (resp *rpcResponse) result() (result []byte, err error) {
-	if resp.Error != nil {
+	if resp.Error.Error() != "" {
 		return []byte{}, errors.Wrap(resp.Error, "Rpc BadResponse")
 	}
 	result, err = json.Marshal(resp.Result)
@@ -51,6 +58,9 @@ type rpcError struct {
 	Message string `json:"message"`
 }
 
-func (e *rpcError) Error() string {
-	return fmt.Sprintf("errCode: %d, errMsg: %s", e.Code, e.Message)
+func (e rpcError) Error() string {
+	if e.Message != "" {
+		return fmt.Sprintf("errCode: %d, errMsg: %s", e.Code, e.Message)
+	}
+	return ""
 }

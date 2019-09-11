@@ -98,6 +98,9 @@ func (client *OmniClient) GetAllBalancesForAddress(address string) (propertyToke
 
 	var result []byte
 	if result, err = client.Exec(cmd); err != nil {
+		if err == ErrAddressNotFound {
+			err = nil
+		}
 		return
 	}
 
