@@ -3,17 +3,16 @@ package scan
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/mitchellh/cli"
 	"github.com/sirupsen/logrus"
 	"github.com/syndtr/goleveldb/leveldb/errors"
 	"io"
 	"omni-scan/rpc"
+	"omni-scan/storage/leveldb"
 	"os"
 	"strconv"
 	"time"
-	"omni-scan/storage/leveldb"
-	"github.com/mitchellh/cli"
 )
-
 
 func New() *cmd {
 	return &cmd{}
@@ -65,7 +64,7 @@ func ScanData() {
 	client := rpc.DefaultOmniClient
 
 	var increment int64 = 1000
-	startScanBlockHeight, endScanBlockHeight := hasScannedBlockHeight, hasScannedBlockHeight + increment
+	startScanBlockHeight, endScanBlockHeight := hasScannedBlockHeight, hasScannedBlockHeight+increment
 OUT:
 	for {
 		latestBlock, err := client.GetLatestBlockInfo()
@@ -153,23 +152,22 @@ OUT:
 
 		infoLogger.Info(fmt.Sprintf("hasScannedBlockHeight: %d, recordNums: %d, use: %s", endScanBlockHeight, recordNums, time.Since(start).String()))
 
-		if latestBlock.BlockHeight < endScanBlockHeight + increment  {
+		if latestBlock.BlockHeight < endScanBlockHeight+increment {
 			increment = latestBlock.BlockHeight - endScanBlockHeight
 		}
 
-		startScanBlockHeight, endScanBlockHeight  = endScanBlockHeight + 1, endScanBlockHeight + increment
+		startScanBlockHeight, endScanBlockHeight = endScanBlockHeight+1, endScanBlockHeight+increment
 	}
 }
 
-
-func newLogger(writer io.Writer, level logrus.Level) *logrus.Logger  {
+func newLogger(writer io.Writer, level logrus.Level) *logrus.Logger {
 	logger := logrus.New()
 	logger.SetOutput(writer)
 	logger.SetLevel(level)
 	logger.SetFormatter(&logrus.TextFormatter{
 		ForceColors:     true,
 		TimestampFormat: "2006-01-02 03:04:05",
-		FullTimestamp:true,
+		FullTimestamp:   true,
 	})
 	return logger
 }
