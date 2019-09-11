@@ -21,7 +21,7 @@ func New() *cmd {
 type cmd struct{}
 
 func (c *cmd) Run(args []string) int {
-	ScanData1()
+	ScanData()
 	return cli.RunResultHelp
 }
 
