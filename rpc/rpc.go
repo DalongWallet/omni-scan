@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/pkg/errors"
 	"omni-scan/models"
+	"reflect"
 )
 
 func (client *OmniClient) GetLatestBlockInfo() (block models.OmniInfoResult, err error) {
@@ -98,7 +99,7 @@ func (client *OmniClient) GetAllBalancesForAddress(address string) (propertyToke
 
 	var result []byte
 	if result, err = client.Exec(cmd); err != nil {
-		if err == ErrAddressNotFound {
+		if reflect.DeepEqual(err, ErrAddressNotFound) {
 			err = nil
 		}
 		return
