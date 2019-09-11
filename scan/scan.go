@@ -42,7 +42,7 @@ func ScanData() {
 	defer errLogFile.Close()
 	errLogger := newLogger(errLogFile, logrus.ErrorLevel)
 
-	db, err := leveldb.Open("./omni_db")
+	db, err := leveldb.Open("./omni_db", nil)
 	if err != nil {
 		panic(err)
 	}

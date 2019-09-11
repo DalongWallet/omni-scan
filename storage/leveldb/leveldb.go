@@ -3,6 +3,7 @@ package leveldb
 import (
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/iterator"
+	"github.com/syndtr/goleveldb/leveldb/opt"
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
@@ -10,7 +11,7 @@ type levelStorage struct {
 	DB *leveldb.DB
 }
 
-func Open(path string) (*levelStorage, error) {
+func Open(path string, opt *opt.Options) (*levelStorage, error) {
 	db, err := leveldb.OpenFile(path, nil)
 	if err != nil {
 		return &levelStorage{}, err
