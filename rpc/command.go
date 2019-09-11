@@ -6,6 +6,13 @@ import (
 	"github.com/pkg/errors"
 )
 
+var (
+	ErrAddressNotFound = &rpcError{
+		Code:    -8,
+		Message: "Address not found",
+	}
+)
+
 type command interface {
 	ID() int
 	Method() string

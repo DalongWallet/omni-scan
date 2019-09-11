@@ -1,8 +1,8 @@
 package logic
 
 import (
-	"omni-scan/models"
-	"omni-scan/storage"
+	"github.com/DalongWallet/omni-scan/models"
+	"github.com/DalongWallet/omni-scan/storage"
 )
 
 type ConfirmedTxMgr struct {

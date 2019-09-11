@@ -2,7 +2,7 @@ package models
 
 import (
 	"github.com/golang/protobuf/proto"
-	"omni-scan/storage"
+	"github.com/DalongWallet/omni-scan/storage"
 )
 
 // key:  context

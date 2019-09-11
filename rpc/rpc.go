@@ -3,7 +3,8 @@ package rpc
 import (
 	"encoding/json"
 	"github.com/pkg/errors"
-	"omni-scan/models"
+	"github.com/DalongWallet/omni-scan/models"
+	"reflect"
 )
 
 func (client *OmniClient) GetLatestBlockInfo() (block models.OmniInfoResult, err error) {
@@ -98,6 +99,11 @@ func (client *OmniClient) GetAllBalancesForAddress(address string) (propertyToke
 
 	var result []byte
 	if result, err = client.Exec(cmd); err != nil {
+		if rpcErr, ok := errors.Cause(err).(*rpcError); ok {
+			if reflect.DeepEqual(rpcErr, ErrAddressNotFound) {
+				err = nil
+			}
+		}
 		return
 	}
 
