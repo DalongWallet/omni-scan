@@ -11,12 +11,57 @@ type levelStorage struct {
 	DB *leveldb.DB
 }
 
-func Open(path string, opt *opt.Options) (*levelStorage, error) {
-	db, err := leveldb.OpenFile(path, nil)
-	if err != nil {
-		return &levelStorage{}, err
+var LevelStoragePool = map[string]*levelStorage{}
+
+
+func GetLevelStorage(path string, opt*opt.Options) (storage *levelStorage) {
+	var db *leveldb.DB
+
+	var err error
+	storage = LevelStoragePool[path]
+
+	// storage has been created
+	if storage != nil {
+		if _, err = storage.DB.GetSnapshot(); err == nil {
+			// db has opened, return directly
+			return
+		}else {
+			// reopen if db has been closed
+			if err.Error() == "leveldb: closed" {
+				if db, err = leveldb.OpenFile(path, opt); err != nil {
+					panic(err)
+				}
+				storage = newLevelStorage(db)
+				LevelStoragePool[path] = storage
+				return
+			}
+			panic(err)
+		}
 	}
-	return &levelStorage{DB: db}, nil
+
+	// storage has not been created
+	if db, err = leveldb.OpenFile(path, opt); err == nil {
+		storage = newLevelStorage(db)
+		LevelStoragePool[path] = storage
+		return
+	}else {
+		// db has been locked, try to recover
+		if err.Error() == "resource temporarily unavailable" {
+			if db, err = leveldb.RecoverFile(path, opt); err != nil {
+				panic(err)
+			}
+			storage = newLevelStorage(db)
+			LevelStoragePool[path] = storage
+			return
+		}
+		panic(err)
+	}
+}
+
+func newLevelStorage(db *leveldb.DB) *levelStorage {
+	return &levelStorage{
+		DB:db,
+	}
 }
 
 func (s *levelStorage) Close() error {
