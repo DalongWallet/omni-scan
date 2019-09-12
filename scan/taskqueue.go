@@ -32,6 +32,7 @@ func (tq *TaskQueue) AllFinished() bool {
 	return false
 }
 
+// TODO: 加上最大尝试次数
 func NewTaskQueue(values []string) *TaskQueue {
 	var tasks []*Task
 	for _, v := range values {

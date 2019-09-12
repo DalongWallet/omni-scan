@@ -118,7 +118,7 @@ func ScanData() {
 					addrAllBalances, err := client.GetAllBalancesForAddress(addr)
 					if err != nil {
 						if err.Error() != "Work queue depth exceeded" {
-							errLogger.Error(fmt.Sprintf("%+v \n\n", err))
+							errLogger.Error(fmt.Sprintf("Get Address Balance Failed: %s, %+v \n\n",addr, err))
 						}
 						time.Sleep(1)
 						continue
