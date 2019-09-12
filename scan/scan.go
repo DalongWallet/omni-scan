@@ -93,7 +93,7 @@ func ScanData() {
 			batch := db.NewBatch()
 			txQueue := NewTaskQueue(txIdList)
 			for !txQueue.AllFinished() {
-				txId := txQueue.GetTask().Value
+				txId := txQueue.GetTask()
 				tx, err := client.GetTransaction(txId)
 				if err != nil {
 					if err.Error() != "Work queue depth exceeded" {
@@ -115,7 +115,7 @@ func ScanData() {
 
 				addrQueue := NewTaskQueue([]string{tx.SendingAddress, tx.ReferenceAddress,})
 				for !addrQueue.AllFinished() {
-					addr := addrQueue.GetTask().Value
+					addr := addrQueue.GetTask()
 					addrAllBalances, err := client.GetAllBalancesForAddress(addr)
 					if err != nil {
 						if err.Error() != "Work queue depth exceeded" {

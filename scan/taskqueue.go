@@ -1,18 +1,15 @@
 package scan
 
 
-type Task struct{
-	Value string
-}
 
 type TaskQueue struct {
-	tasks []*Task
+	tasks []string
 	rptr int
 }
 
-func (tq *TaskQueue) GetTask() *Task {
+func (tq *TaskQueue) GetTask() string {
 	if tq.AllFinished() {
-		return nil
+		return ""
 	}
 	return tq.tasks[0]
 }
@@ -33,13 +30,7 @@ func (tq *TaskQueue) AllFinished() bool {
 }
 
 // TODO: 加上最大尝试次数
-func NewTaskQueue(values []string) *TaskQueue {
-	var tasks []*Task
-	for _, v := range values {
-		tasks = append(tasks, &Task{
-			Value:v,
-		})
-	}
+func NewTaskQueue(tasks []string) *TaskQueue {
 	return &TaskQueue{
 		tasks: tasks,
 		rptr: len(tasks)-1,
