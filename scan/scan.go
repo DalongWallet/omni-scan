@@ -59,8 +59,9 @@ func ScanData() {
 	}
 
 	var increment int64 = 1000
+
 	client := rpc.DefaultOmniClient
-	startScanBlockHeight, endScanBlockHeight := hasScannedBlockHeight, hasScannedBlockHeight+increment
+	startScanBlockHeight, endScanBlockHeight := hasScannedBlockHeight, hasScannedBlockHeight + increment
 
 	for {
 		latestBlock, err := client.GetLatestBlockInfo()
