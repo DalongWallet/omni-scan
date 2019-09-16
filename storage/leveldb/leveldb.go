@@ -7,82 +7,58 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
-type levelStorage struct {
+type LevelStorage struct {
 	DB *leveldb.DB
 }
 
-var LevelStoragePool = map[string]*levelStorage{}
+var LevelStoragePool = map[string]*LevelStorage{}
 
 
-func GetLevelDbStorage(path string, opt*opt.Options) (storage *levelStorage) {
-	var db *leveldb.DB
-
-	var err error
-	storage = LevelStoragePool[path]
-
-	// storage has been created before
-	if storage != nil {
-		if _, err = storage.DB.GetSnapshot(); err == nil {
-			// db has opened, return directly
-			return
-		}else {
-			// reopen if db has been closed
-			if err.Error() == "leveldb: closed" {
-				if db, err = leveldb.OpenFile(path, opt); err != nil {
-					panic(err)
-				}
-				storage = newLevelStorage(db)
-				LevelStoragePool[path] = storage
-				return
-			}
-			panic(err)
-		}
-	}
-
-	// storage has not been created
-	if db, err = leveldb.OpenFile(path, opt); err == nil {
-		storage = newLevelStorage(db)
-		LevelStoragePool[path] = storage
-		return
+func GetLevelDbStorage(path string, opt *opt.Options) *LevelStorage {
+	if db, err := leveldb.OpenFile(path, opt); err == nil {
+		return newLevelStorage(db)
 	}else {
 		// db has been locked, try to recover
 		if err.Error() == "resource temporarily unavailable" {
 			if db, err = leveldb.RecoverFile(path, opt); err != nil {
 				panic(err)
 			}
-			storage = newLevelStorage(db)
-			LevelStoragePool[path] = storage
-			return
+			return newLevelStorage(db)
 		}
 		panic(err)
 	}
 }
 
-func newLevelStorage(db *leveldb.DB) *levelStorage {
-	return &levelStorage{
+
+func newLevelStorage(db *leveldb.DB) *LevelStorage {
+	return &LevelStorage{
 		DB:db,
 	}
 }
 
-func (s *levelStorage) Close() error {
+func (s *LevelStorage) Close() error {
 	return s.DB.Close()
 }
 
-func (s *levelStorage) Get(key string) ([]byte, error)  {
+func (s *LevelStorage) Get(key string) ([]byte, error)  {
 	return s.DB.Get([]byte(key), nil)
 }
 
-func (s *levelStorage) GetString(key string) (string, error) {
+func (s *LevelStorage) GetString(key string) (string, error) {
 	value, err := s.DB.Get([]byte(key), nil)
 	return string(value), err
 }
 
-func (s *levelStorage) Set(key string, value []byte) error {
+func (s *LevelStorage) Set(key string, value []byte) error {
 	return s.DB.Put([]byte(key), value,nil)
 }
 
-func (s *levelStorage) SetString(key string, value string) error {
+func (s *LevelStorage) SetString(key string, value string) error {
 	return s.DB.Put([]byte(key), []byte(value), nil)
+}
+
+func (s *LevelStorage) Delete(key string) error {
+	return s.DB.Delete([]byte(key), nil)
 }
 
 func iterateData(iter iterator.Iterator)  (data [][]byte, err error) {
@@ -95,19 +71,20 @@ func iterateData(iter iterator.Iterator)  (data [][]byte, err error) {
 	return
 }
 
-func (s *levelStorage) Range(start, end string)([][]byte, error) {
+// range [start, end)
+func (s *LevelStorage) Range(start, end string)([][]byte, error) {
 	iter := s.DB.NewIterator(&util.Range{Start:[]byte(start), Limit:[]byte(end)}, nil)
 	defer iter.Release()
 	return iterateData(iter)
 }
 
-func (s *levelStorage) GetWithPrefix(prefix string) ([][]byte, error) {
+func (s *LevelStorage) GetWithPrefix(prefix string) ([][]byte, error) {
 	iter := s.DB.NewIterator(util.BytesPrefix([]byte(prefix)), nil)
 	defer iter.Release()
 	return iterateData(iter)
 }
 
-func (s *levelStorage) NewBatch() *Batch {
+func (s *LevelStorage) NewBatch() *Batch {
 	return &Batch{
 		db:    s,
 		batch: new(leveldb.Batch),
@@ -115,7 +92,7 @@ func (s *levelStorage) NewBatch() *Batch {
 }
 
 type Batch struct {
-	db *levelStorage
+	db *LevelStorage
 	batch *leveldb.Batch
 }
 

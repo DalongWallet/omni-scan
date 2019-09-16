@@ -1,55 +1,99 @@
 package rest
 
 import (
-	"context"
 	"fmt"
+	"github.com/DalongWallet/omni-scan/api/rest/middleware/jwt"
+	"github.com/DalongWallet/omni-scan/logic"
+	"github.com/DalongWallet/omni-scan/omnicore"
 	"github.com/DalongWallet/omni-scan/rpc"
+	"github.com/DalongWallet/omni-scan/storage/leveldb"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
-	"github.com/DalongWallet/omni-scan/logic"
-	"github.com/DalongWallet/omni-scan/omnicore"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+	"context"
 )
 
 type Server struct {
-	httpServer 	*http.Server
-	mgr        	*logic.OmniMgr
-	omniCli 	*omnicore.Client
+	storage    *leveldb.LevelStorage
+	httpServer *http.Server
+	mgr        *logic.OmniMgr
+	omniCli    *omnicore.Client
+	worker     *omnicore.Worker
 }
 
-func NewHttpServer(port int) *Server {
+func NewServer(port int) *Server {
 	gin.SetMode(gin.ReleaseMode)
-	engin := gin.Default()
+
+	engine := gin.Default()
+	engine.Use(jwt.JWT())
+
 
 	addr := fmt.Sprintf("127.0.0.1:%d", port)
 	httpServer := &http.Server{
 		Addr:    addr,
-		Handler: engin,
+		Handler: engine,
 	}
+
+	storage := leveldb.GetLevelDbStorage("./omni_db", nil)
 	omniCli := &omnicore.Client{
 		RpcClient: rpc.DefaultOmniClient,
 	}
+	worker := omnicore.NewWorker(storage, omniCli.RpcClient)
 
 	server := &Server{
+		storage: storage,
 		httpServer: httpServer,
 		omniCli: omniCli,
+		worker: worker,
 	}
-	server.initRouter(engin)
+	server.initRouter(engine)
 
 	return server
 }
 
-func (s *Server) Run() {
-	logrus.Print("Start omni-scan REST api service")
-
-	err := s.httpServer.ListenAndServe()
-	if err != nil {
-		logrus.Error("RestServer.Run %s", err)
+func (s *Server) Run() int {
+	var wg sync.WaitGroup
+	startRestService := func() {
+		wg.Add(1)
+		defer wg.Done()
+		logrus.Println("Start omni-scan REST api service")
+		if err := s.httpServer.ListenAndServe(); err != nil {
+			logrus.Error("RestServer.Run %s", err)
+		}
+		fmt.Println("rest service shutdown")
 	}
-}
+	startScanService := func() {
+		wg.Add(1)
+		defer wg.Done()
+		logrus.Println("Start omni-scan scan and save data")
+		s.worker.Run()
+		fmt.Println("scan and save data stop")
+	}
 
-func (s *Server) Stop() {
-	s.httpServer.Shutdown(context.Background())
+	waitToStop := func() {
+		signalChan := make(chan os.Signal, 1)
+		signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+		<-signalChan
+	}
+
+	stopAllServices := func() {
+		s.worker.Stop()
+		s.httpServer.Shutdown(context.Background())
+		s.storage.Close()
+		wg.Wait()
+	}
+
+	go startRestService()
+	go startScanService()
+	waitToStop()
+	stopAllServices()
+
+	return 1
+
 }
 
 func (s *Server) initRouter(r gin.IRouter) {
@@ -58,4 +102,5 @@ func (s *Server) initRouter(r gin.IRouter) {
 	r.GET("/api/v1/tx", s.GetTransactionById)
 	r.GET("/api/v1/balance", s.GetAddressBalance)
 	r.POST("/api/v1/sendRawTx", s.SendRawTransaction)
+
 }

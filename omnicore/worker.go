@@ -1,39 +1,39 @@
-package scan
+package omnicore
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/mitchellh/cli"
+	"github.com/DalongWallet/omni-scan/models"
+	"github.com/DalongWallet/omni-scan/rpc"
+	"github.com/DalongWallet/omni-scan/storage/leveldb"
 	"github.com/sirupsen/logrus"
 	"github.com/syndtr/goleveldb/leveldb/errors"
 	"io"
-	"github.com/DalongWallet/omni-scan/rpc"
-	"github.com/DalongWallet/omni-scan/storage/leveldb"
 	"os"
 	"strconv"
 	"time"
 )
 
-func New() *cmd {
-	return &cmd{}
+type Worker struct {
+	storage *leveldb.LevelStorage
+	rpcClient *rpc.OmniClient
+	ctx context.Context
+	stop context.CancelFunc
 }
 
-type cmd struct{}
-
-func (c *cmd) Run(args []string) int {
-	ScanData()
-	return cli.RunResultHelp
+func NewWorker(storage *leveldb.LevelStorage, rpcClient *rpc.OmniClient) *Worker {
+	ctx, cancel := context.WithCancel(context.Background())
+	return &Worker{
+		storage:storage,
+		rpcClient:rpcClient,
+		ctx:ctx,
+		stop:cancel,
+	}
 }
 
-func (c *cmd) Synopsis() string {
-	return "Scan Block Data And Save"
-}
 
-func (c *cmd) Help() string {
-	return ""
-}
-
-func ScanData() {
+func (w *Worker) Run() {
 	infoLogFile := mustOpenFile("./scan_info.log")
 	defer infoLogFile.Close()
 	infoLogger := newLogger(infoLogFile, logrus.InfoLevel)
@@ -42,8 +42,7 @@ func ScanData() {
 	defer errLogFile.Close()
 	errLogger := newLogger(errLogFile, logrus.ErrorLevel)
 
-	db := leveldb.GetLevelDbStorage("./omni_db", nil)
-	defer db.Close()
+	db := w.storage
 
 	var hasScannedBlockHeight int64
 	hasScannedBlockIndex, err := db.Get("hasScannedBlockHeight")
@@ -60,11 +59,15 @@ func ScanData() {
 
 	var increment int64 = 1000
 
-	client := rpc.DefaultOmniClient
 	startScanBlockHeight, endScanBlockHeight := hasScannedBlockHeight, hasScannedBlockHeight + increment
 
 	for {
-		latestBlock, err := client.GetLatestBlockInfo()
+		if w.isDone() {
+			return
+		}
+
+		// TODO: save LatestBlockInfo
+		latestBlock, err := w.rpcClient.GetLatestBlockInfo()
 		if err != nil {
 			if err.Error() != "Work queue depth exceeded" {
 				errLogger.Error(fmt.Sprintf("GetInfo Failed, %+v \n\n", err))
@@ -81,7 +84,7 @@ func ScanData() {
 		start := time.Now()
 
 		fmt.Println("scan:", startScanBlockHeight,"-", endScanBlockHeight)
-		txIdList, err := client.ListBlocksTransactions(startScanBlockHeight, endScanBlockHeight)
+		txIdList, err := w.rpcClient.ListBlocksTransactions(startScanBlockHeight, endScanBlockHeight)
 		if err != nil {
 			if err.Error() != "Work queue depth exceeded" {
 				errLogger.Error(fmt.Sprintf("ListBlocksTransactions [%d,%d] Failed,%+v \n\n", startScanBlockHeight, endScanBlockHeight, err))
@@ -94,7 +97,7 @@ func ScanData() {
 			txQueue := NewTaskQueue(txIdList)
 			for !txQueue.AllFinished() {
 				txId := txQueue.GetTask()
-				tx, err := client.GetTransaction(txId)
+				tx, err := w.rpcClient.GetTransaction(txId)
 				if err != nil {
 					if err.Error() != "Work queue depth exceeded" {
 						errLogger.Error(fmt.Sprintf("GetTransaction [%s] Failed, %+v \n\n", txId,err))
@@ -117,15 +120,16 @@ func ScanData() {
 					time.Sleep(1)
 					continue
 				}
+				batch.Set(models.TxKey(txId), txBytes)
 
 				addrQueue := NewTaskQueue(addrs)
 				for !addrQueue.AllFinished() {
 					addr := addrQueue.GetTask()
 
-					key := fmt.Sprintf("tx-%s-%d-%s", addr, tx.PropertyId, tx.TxId)
+					key := models.AddrPropertyTxKey(addr, tx.PropertyId, tx.TxId)
 					batch.Set(key, txBytes)
 
-					addrAllBalances, err := client.GetAllBalancesForAddress(addr)
+					addrAllBalances, err := w.rpcClient.GetAllBalancesForAddress(addr)
 					if err != nil {
 						if err.Error() != "Work queue depth exceeded" {
 							errLogger.Error(fmt.Sprintf("Txid [%s], Get Address [%s] Balance Failed, %+v \n\n",tx.TxId, addr, err))
@@ -134,7 +138,7 @@ func ScanData() {
 						continue
 					}
 					for _, one := range addrAllBalances {
-						key = fmt.Sprintf("balance-%s-%d", addr, one.PropertyId)
+						key = models.AddrPropertyBalanceKey(addr, one.PropertyId)
 						balanceBytes, err := json.Marshal(one)
 						if err != nil {
 							errLogger.Error(fmt.Sprintf("Marshal Balance [ %+v ] Failed, %+v \n\n", one,err))
@@ -174,6 +178,20 @@ func ScanData() {
 	}
 }
 
+func (w *Worker) Stop() {
+	w.stop()
+}
+
+func (w *Worker) isDone() bool {
+	select {
+	case <-w.ctx.Done():
+		return true
+	default:
+		return false
+	}
+}
+
+
 func newLogger(writer io.Writer, level logrus.Level) *logrus.Logger {
 	logger := logrus.New()
 	logger.SetOutput(writer)
@@ -193,3 +211,6 @@ func mustOpenFile(path string) *os.File {
 	}
 	return file
 }
+
+
+

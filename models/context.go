@@ -1,8 +1,8 @@
 package models
 
 import (
+	"github.com/DalongWallet/omni-scan/storage/leveldb"
 	"github.com/golang/protobuf/proto"
-	"github.com/DalongWallet/omni-scan/storage"
 )
 
 // key:  context
@@ -79,7 +79,7 @@ func (m *Context) Decode(data []byte) error {
 	return Decode(data, m)
 }
 
-func (m *Context) Save(store storage.Storage, key string) error {
+func (m *Context) Save(store leveldb.LevelStorage, key string) error {
 	data, err := m.Encode()
 	if err != nil {
 		return err
@@ -87,10 +87,10 @@ func (m *Context) Save(store storage.Storage, key string) error {
 	if key == "" {
 		key = ContextKey
 	}
-	return store.Set(key, string(data))
+	return store.Set(key, data)
 }
 
-func (m *Context) Load(store storage.Storage, key string) error {
+func (m *Context) Load(store leveldb.LevelStorage, key string) error {
 	if key == "" {
 		key = ContextKey
 	}
@@ -98,7 +98,7 @@ func (m *Context) Load(store storage.Storage, key string) error {
 	if err != nil {
 		return err
 	}
-	if data == "" {
+	if len(data) == 0 {
 		return ErrorNotFound
 	}
 	err = m.Decode([]byte(data))

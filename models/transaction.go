@@ -1,6 +1,8 @@
 package models
 
-import "github.com/DalongWallet/omni-scan/storage"
+import (
+	"github.com/DalongWallet/omni-scan/storage/leveldb"
+)
 
 /*
 {
@@ -43,6 +45,7 @@ type Transaction struct {
 	Confirmations  	int64 `json:"confirmations"`
 }
 
+
 func (m *Transaction) Encode() ([]byte, error) {
 	return Encode(m)
 }
@@ -51,20 +54,20 @@ func (m *Transaction) Decode(data []byte) error {
 	return Decode(data, m)
 }
 
-func (m *Transaction) Save(store storage.Storage) error {
+func (m *Transaction) Save(store leveldb.LevelStorage) error {
 	data, err := m.Encode()
 	if err != nil {
 		return err
 	}
-	return store.Set(TxKey(m.TxId), string(data))
+	return store.Set(TxKey(m.TxId), data)
 }
 
-func (m *Transaction) Load(store storage.Storage, txid string) error {
+func (m *Transaction) Load(store leveldb.LevelStorage, txid string) error {
 	data, err := store.Get(TxKey(txid))
 	if err != nil {
 		return err
 	}
-	if data == "" {
+	if len(data) == 0 {
 		return ErrorNotFound
 	}
 	err = m.Decode([]byte(data))

@@ -1,17 +1,13 @@
 package rest
 
-import "github.com/mitchellh/cli"
-
 func New() *cmd {
 	return &cmd{}
 }
 
 type cmd struct{}
 
-func (c *cmd) Run(args []string) int {
-	apiServer := NewHttpServer(20517)
-	apiServer.Run()
-	return cli.RunResultHelp
+func (c *cmd) Run(args []string) (int) {
+	return NewServer(20517).Run()
 }
 
 func (c *cmd) Synopsis() string {
