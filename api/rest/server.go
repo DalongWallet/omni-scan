@@ -64,14 +64,14 @@ func (s *Server) Run() int {
 		if err := s.httpServer.ListenAndServe(); err != nil {
 			logrus.Error("RestServer.Run %s", err)
 		}
-		fmt.Println("rest service shutdown")
+		logrus.Println("rest service shutdown")
 	}
 	startScanService := func() {
 		wg.Add(1)
 		defer wg.Done()
 		logrus.Println("Start omni-scan scan and save data")
 		s.worker.Run()
-		fmt.Println("scan and save data stop")
+		logrus.Println("scan and save data stop")
 	}
 
 	waitToStop := func() {
@@ -84,6 +84,7 @@ func (s *Server) Run() int {
 		s.worker.Stop()
 		s.httpServer.Shutdown(context.Background())
 		s.storage.Close()
+		logrus.Println("close db")
 		wg.Wait()
 	}
 
