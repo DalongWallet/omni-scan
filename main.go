@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/DalongWallet/omni-scan/api/rest"
 	"github.com/DalongWallet/omni-scan/conf"
-	"github.com/DalongWallet/omni-scan/scan"
 	"github.com/mitchellh/cli"
 	"log"
 	"os"
