@@ -67,7 +67,7 @@ func ScanData() {
 		latestBlock, err := client.GetLatestBlockInfo()
 		if err != nil {
 			if err.Error() != "Work queue depth exceeded" {
-				errLogger.Error(fmt.Sprintf("%+v \n\n", err))
+				errLogger.Error(fmt.Sprintf("GetInfo Failed, %+v \n\n", err))
 			}
 			time.Sleep(1)
 			continue
@@ -84,7 +84,7 @@ func ScanData() {
 		txIdList, err := client.ListBlocksTransactions(startScanBlockHeight, endScanBlockHeight)
 		if err != nil {
 			if err.Error() != "Work queue depth exceeded" {
-				errLogger.Error(fmt.Sprintf("%+v \n\n", err))
+				errLogger.Error(fmt.Sprintf("ListBlocksTransactions [%d,%d] Failed,%+v \n\n", startScanBlockHeight, endScanBlockHeight, err))
 			}
 			time.Sleep(1)
 			continue
@@ -97,41 +97,51 @@ func ScanData() {
 				tx, err := client.GetTransaction(txId)
 				if err != nil {
 					if err.Error() != "Work queue depth exceeded" {
-						errLogger.Error(fmt.Sprintf("%+v \n\n", err))
+						errLogger.Error(fmt.Sprintf("GetTransaction [%s] Failed, %+v \n\n", txId,err))
 					}
 					time.Sleep(1)
 					continue
 				}
 
-				key1 := fmt.Sprintf("tx-%s-%d-%s", tx.SendingAddress, tx.PropertyId, tx.TxId)
-				key2 := fmt.Sprintf("tx-%s-%d-%s", tx.ReferenceAddress, tx.PropertyId, tx.TxId)
-				value, err := json.Marshal(tx)
+				var addrs []string
+				if tx.SendingAddress != "" {
+					addrs = append(addrs, tx.SendingAddress)
+				}
+				if tx.ReferenceAddress != "" {
+					addrs = append(addrs, tx.ReferenceAddress)
+				}
+
+				txBytes, err := json.Marshal(tx)
 				if err != nil {
-					errLogger.Error(fmt.Sprintf("%+v \n\n", err))
+					errLogger.Error(fmt.Sprintf("Marshal Tx [ %+v ] Failed,%+v \n\n", tx, err))
 					time.Sleep(1)
 					continue
 				}
-				batch.Set(key1, value).Set(key2, value)
 
-				addrQueue := NewTaskQueue([]string{tx.SendingAddress, tx.ReferenceAddress,})
+				addrQueue := NewTaskQueue(addrs)
 				for !addrQueue.AllFinished() {
 					addr := addrQueue.GetTask()
+
+					key := fmt.Sprintf("tx-%s-%d-%s", addr, tx.PropertyId, tx.TxId)
+					batch.Set(key, txBytes)
+
 					addrAllBalances, err := client.GetAllBalancesForAddress(addr)
 					if err != nil {
 						if err.Error() != "Work queue depth exceeded" {
-							errLogger.Error(fmt.Sprintf("Get Address Balance Failed: %s, %+v \n\n",addr, err))
+							errLogger.Error(fmt.Sprintf("Txid [%s], Get Address [%s] Balance Failed, %+v \n\n",tx.TxId, addr, err))
 						}
 						time.Sleep(1)
 						continue
 					}
 					for _, one := range addrAllBalances {
-						key1 = fmt.Sprintf("balance-%s-%d", addr, one.PropertyId)
-						if value, err = json.Marshal(one); err != nil {
-							errLogger.Error(fmt.Sprintf("%+v \n\n", err))
+						key = fmt.Sprintf("balance-%s-%d", addr, one.PropertyId)
+						balanceBytes, err := json.Marshal(one)
+						if err != nil {
+							errLogger.Error(fmt.Sprintf("Marshal Balance [ %+v ] Failed, %+v \n\n", one,err))
 							time.Sleep(1)
 							continue
 						}
-						batch.Set(key1, value)
+						batch.Set(key, balanceBytes)
 					}
 					addrQueue.MarkTaskDone()
 				}
@@ -148,7 +158,7 @@ func ScanData() {
 			}
 
 			if err = db.Set("hasScannedBlockHeight", []byte(strconv.FormatInt(endScanBlockHeight, 10))); err != nil {
-				errLogger.Error(fmt.Sprintf("%+v \n\n", err))
+				errLogger.Error(fmt.Sprintf("Cache HasScannedBlockHeight Failed, %+v \n\n", err))
 				time.Sleep(1)
 				continue
 			}
