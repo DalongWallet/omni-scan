@@ -1,6 +1,8 @@
 package rest
 
-import "github.com/mitchellh/cli"
+import (
+	"github.com/mitchellh/cli"
+)
 
 func New() *cmd {
 	return &cmd{}

@@ -1,6 +1,7 @@
 package rest
 
 import (
+	. "github.com/DalongWallet/omni-scan/api/rest/response"
 	"github.com/gin-gonic/gin"
 	"strconv"
 	"strings"
