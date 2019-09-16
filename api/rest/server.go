@@ -6,6 +6,7 @@ import (
 	"github.com/DalongWallet/omni-scan/api/rest/middleware/jwt"
 	"github.com/DalongWallet/omni-scan/logic"
 	"github.com/DalongWallet/omni-scan/omnicore"
+	"github.com/DalongWallet/omni-scan/rpc"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -28,8 +29,13 @@ func NewHttpServer(port int) *Server {
 		Addr:    addr,
 		Handler: engine,
 	}
+	omniCli := &omnicore.Client{
+		RpcClient: rpc.DefaultOmniClient,
+	}
+
 	server := &Server{
 		httpServer: httpServer,
+		omniCli: omniCli,
 	}
 	server.initRouter(engine)
 
