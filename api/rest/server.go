@@ -3,6 +3,7 @@ package rest
 import (
 	"context"
 	"fmt"
+	"github.com/DalongWallet/omni-scan/rpc"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -25,8 +26,13 @@ func NewHttpServer(port int) *Server {
 		Addr:    addr,
 		Handler: engin,
 	}
+	omniCli := &omnicore.Client{
+		RpcClient: rpc.DefaultOmniClient,
+	}
+
 	server := &Server{
 		httpServer: httpServer,
+		omniCli: omniCli,
 	}
 	server.initRouter(engin)
 
