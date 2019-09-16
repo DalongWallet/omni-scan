@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"strconv"
 	"strings"
@@ -11,8 +12,21 @@ const OmniPropertyUSDT = 31
 func (s *Server) GetBlocksTxHashList(c *gin.Context) {
 	startStr := c.Query("start")
 	endStr := c.Query("end")
+
+	if !isInt(startStr) || !isInt(endStr) {
+		RespJson(c, BadRequest, errors.New("start or end must be int"))
+	}
+
 	start, _ := strconv.Atoi(startStr)
 	end, _ := strconv.Atoi(endStr)
+
+	if start < 0 || end < 0 {
+		RespJson(c, BadRequest, errors.New("start or end must be greater than 0"))
+	}
+
+	if start > end {
+		RespJson(c, BadRequest, errors.New("end must be greater than start"))
+	}
 
 	hashList, err := s.omniCli.RpcClient.ListBlocksTransactions(int64(start), int64(end))
 	if err != nil {
