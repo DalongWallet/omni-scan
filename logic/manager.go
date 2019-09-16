@@ -2,7 +2,7 @@ package logic
 
 import (
 	"github.com/DalongWallet/omni-scan/models"
-	"github.com/DalongWallet/omni-scan/storage"
+	"github.com/DalongWallet/omni-scan/storage/leveldb"
 )
 
 type TxGetter interface {
@@ -16,7 +16,7 @@ type OmniMgr struct {
 	MemPool     *MemPoolMgr
 }
 
-func NewOmniMgr(st storage.Storage, mempoolSize int) (*OmniMgr, error) {
+func NewOmniMgr(st leveldb.LevelStorage, mempoolSize int) (*OmniMgr, error) {
 	m := &OmniMgr{}
 	cfBlock, err := NewConfirmedBlockMgr(st)
 	if err != nil {
