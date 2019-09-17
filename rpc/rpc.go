@@ -146,5 +146,5 @@ func (client *OmniClient) DecodeTransaction(rawtx string) (tx models.Transaction
 }
 
 func unmarshal(data []byte, v interface{}, errMsg string) error {
-	return errors.Wrap(json.Unmarshal(data, &v), errMsg)
+	return errors.Wrap(json.Unmarshal(data, v), errMsg)
 }
