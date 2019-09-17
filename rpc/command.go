@@ -3,6 +3,7 @@ package rpc
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	officialJson "encoding/json"
 )
 
 var (
@@ -39,7 +40,7 @@ func newRpcRequest(cmd command) *rpcReqeust {
 }
 
 type rpcResponse struct {
-	Result []byte		   `json:"result"`
+	Result officialJson.RawMessage		   `json:"result"`
 	Error  *rpcError       `json:"error"`
 }
 
