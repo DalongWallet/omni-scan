@@ -7,9 +7,11 @@ import (
 	"github.com/DalongWallet/omni-scan/rpc"
 	"github.com/DalongWallet/omni-scan/storage/leveldb"
 	"github.com/json-iterator/go"
+	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/syndtr/goleveldb/leveldb/errors"
 	"io"
+	"math"
 	"os"
 	"strconv"
 	"time"
@@ -59,8 +61,7 @@ func (w *Worker) Run() {
 	}
 
 	var increment int64 = 1000
-
-	startScanBlockHeight, endScanBlockHeight := hasScannedBlockHeight, hasScannedBlockHeight + increment
+	startScanBlockHeight, endScanBlockHeight := hasScannedBlockHeight, hasScannedBlockHeight
 
 	for {
 		if w.isDone() {
@@ -76,6 +77,12 @@ func (w *Worker) Run() {
 			time.Sleep(1)
 			continue
 		}
+
+		increment = decimal.New(1000,0).Mul(decimal.NewFromFloat(math.Pow(0.25, float64((endScanBlockHeight - 200000) / 100000 )))).IntPart()
+		if increment == 0 || latestBlock.BlockHeight - endScanBlockHeight <= 100  {
+			increment = 1
+		}
+		startScanBlockHeight, endScanBlockHeight = endScanBlockHeight+1, endScanBlockHeight+increment
 
 		if startScanBlockHeight > latestBlock.BlockHeight {
 			continue
@@ -93,6 +100,7 @@ func (w *Worker) Run() {
 			time.Sleep(1)
 			continue
 		}
+		infoLogger.Info("tx count:", len(txIdList))
 		if len(txIdList) > 0 {
 			batch := db.NewBatch()
 			txQueue := NewTaskQueue(txIdList)
@@ -176,12 +184,6 @@ func (w *Worker) Run() {
 		}
 
 		infoLogger.Info(fmt.Sprintf("hasScannedBlockHeight: %d, recordNums: %d, use: %s", endScanBlockHeight, recordNums, time.Since(start).String()))
-
-		if latestBlock.BlockHeight < endScanBlockHeight+increment {
-			increment = latestBlock.BlockHeight - endScanBlockHeight
-		}
-
-		startScanBlockHeight, endScanBlockHeight = endScanBlockHeight+1, endScanBlockHeight+increment
 	}
 }
 
