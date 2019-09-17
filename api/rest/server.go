@@ -62,7 +62,7 @@ func (s *Server) Run() int {
 		defer wg.Done()
 		logrus.Println("Start omni-scan REST api service")
 		if err := s.httpServer.ListenAndServe(); err != nil {
-			logrus.Error("RestServer.Run %s", err)
+			logrus.Errorf("RestServer.Run %s", err)
 		}
 		logrus.Println("rest service shutdown")
 	}
@@ -71,7 +71,7 @@ func (s *Server) Run() int {
 		defer wg.Done()
 		logrus.Println("Start omni-scan scan and save data")
 		s.worker.Run()
-		logrus.Println("scan and save data stop")
+		logrus.Println("scan service shutdown")
 	}
 
 	waitToStop := func() {
@@ -84,7 +84,6 @@ func (s *Server) Run() int {
 		s.worker.Stop()
 		s.httpServer.Shutdown(context.Background())
 		s.storage.Close()
-		logrus.Println("close db")
 		wg.Wait()
 	}
 
@@ -94,7 +93,6 @@ func (s *Server) Run() int {
 	stopAllServices()
 
 	return 1
-
 }
 
 func (s *Server) initRouter(r gin.IRouter) {
