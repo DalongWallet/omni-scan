@@ -49,7 +49,7 @@ func (s *Server) GetTransactionById(c *gin.Context) {
 	}
 
 	if tx.TxId == "" {
-		RespJson(c, OK, "tx not exist")
+		RespJson(c, OK, "transaction not exist")
 		return
 	}
 
@@ -63,8 +63,10 @@ func (s *Server) GetAddressBalance(c *gin.Context) {
 		return
 	}
 
-	balance, err := s.mgr.GetAddressBalance(addr, OmniPropertyUSDT)
-	if err != nil {
+	balance := models.PropertyTokenBalance{
+		PropertyId:OmniPropertyUSDT,
+	}
+	if err := balance.Load(s.storage, addr, OmniPropertyUSDT); err != nil {
 		RespJson(c, InternalServerError, err.Error())
 		return
 	}
