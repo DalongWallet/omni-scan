@@ -101,7 +101,8 @@ func (s *Server) Run() int {
 }
 
 func (s *Server) initRouter(r gin.IRouter) {
-	r.GET("/api/v1/txs", s.GetConfirmedAddressTransactions)
+	r.GET("/api/v1/usdtTxs", s.GetConfirmedAddressUsdtTransactions)
+	r.GET("/api/v1/propertyTxs", s.GetConfirmedAddressPropertyTransactions)
 	r.GET("/api/v1/txHashListByBlocks", s.GetBlocksTxHashList)
 	r.GET("/api/v1/tx", s.GetTransactionById)
 	r.GET("/api/v1/usdtBalance", s.GetAddressUsdtBalance)

@@ -3,6 +3,7 @@ package logic
 import (
 	"github.com/DalongWallet/omni-scan/models"
 	"github.com/DalongWallet/omni-scan/storage/leveldb"
+	"github.com/DalongWallet/omni-scan/utils"
 )
 
 type ConfirmedTxMgr struct {
@@ -44,7 +45,8 @@ func (m *ConfirmedTxMgr) SaveTx(tx *models.Transaction) error {
 	return err
 }
 
-func (m *ConfirmedTxMgr) GetAddressTxs(addr string) ([]*models.Transaction, error) {
-	return []*models.Transaction{}, nil
+func (m *ConfirmedTxMgr) GetAddressTxs(addr string, propertyId int) (txs []*models.Transaction, err error) {
+	err = utils.Load(m.storage, models.AddrPropertyTxsKey(addr, propertyId), txs)
+	return
 }
 

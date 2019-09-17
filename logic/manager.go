@@ -36,8 +36,8 @@ func (m *OmniMgr) GetTx(txid string) (*models.Transaction, error) {
 	return nil, models.ErrorNotFound
 }
 
-func (m *OmniMgr) GetAddressConfirmedTxs(address string, limit uint, offset uint) (confirmTxs []*models.Transaction, err error) {
-	confirmTxs, err = m.ConfirmedTx.GetAddressTxs(address)
+func (m *OmniMgr) GetAddressConfirmedTxs(address string, propertyId int, limit uint, offset uint) (confirmTxs []*models.Transaction, err error) {
+	confirmTxs, err = m.ConfirmedTx.GetAddressTxs(address, propertyId)
 	if err != nil {
 		return
 	}

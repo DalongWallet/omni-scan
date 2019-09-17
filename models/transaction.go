@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/DalongWallet/omni-scan/utils"
 	"github.com/json-iterator/go"
 	"github.com/DalongWallet/omni-scan/storage/leveldb"
 )
@@ -65,7 +66,7 @@ func (m *Transaction) Save(store *leveldb.LevelStorage) error {
 }
 
 func (m *Transaction) Load(store *leveldb.LevelStorage, txid string) (error) {
-	return Load(store, TxKey(txid), m)
+	return utils.Load(store, TxKey(txid), m)
 }
 
 type TxByTxidSlice []*Transaction

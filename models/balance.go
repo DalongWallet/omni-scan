@@ -1,6 +1,9 @@
 package models
 
-import "github.com/DalongWallet/omni-scan/storage/leveldb"
+import (
+	"github.com/DalongWallet/omni-scan/storage/leveldb"
+	"github.com/DalongWallet/omni-scan/utils"
+)
 
 type TokenBalance struct {
 	Balance string `json:"balance"`
@@ -21,5 +24,5 @@ type PropertyTokenBalance struct {
 
 
 func (b *PropertyTokenBalance) Load(store *leveldb.LevelStorage, addr string, propertyId int) (error) {
-	return Load(store, AddrPropertyBalanceKey(addr, propertyId), b)
+	return utils.Load(store, AddrPropertyBalanceKey(addr, propertyId), b)
 }

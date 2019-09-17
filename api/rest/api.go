@@ -93,7 +93,7 @@ func (s *Server) GetAddressUsdtBalance(c *gin.Context) {
 	RespJson(c, OK, balance)
 }
 
-func (s *Server) GetConfirmedAddressTransactions(c *gin.Context) {
+func (s *Server) GetConfirmedAddressUsdtTransactions(c *gin.Context) {
 	addr := c.Query("address")
 	if addr == "" {
 		RespJson(c, BadRequest, "require address")
@@ -115,7 +115,49 @@ func (s *Server) GetConfirmedAddressTransactions(c *gin.Context) {
 	limit, _ := strconv.Atoi(limitStr)
 	offset, _ := strconv.Atoi(offsetStr)
 
-	txs, err := s.mgr.GetAddressConfirmedTxs(addr, uint(limit), uint(offset))
+	txs, err := s.mgr.GetAddressConfirmedTxs(addr, OmniPropertyUSDT, uint(limit), uint(offset))
+	if err != nil {
+		RespJson(c, InternalServerError, err.Error())
+		return
+	}
+
+	RespJson(c, OK, txs)
+}
+
+func (s *Server) GetConfirmedAddressPropertyTransactions(c *gin.Context) {
+	addr := c.Query("address")
+	if addr == "" {
+		RespJson(c, BadRequest, "require address")
+		return
+	}
+
+	propertyIdStr := c.Query("propertyId")
+	if propertyIdStr == "" {
+		RespJson(c, BadRequest, "require propertyId")
+		return
+	}
+	if !isUintStr(propertyIdStr) {
+		RespJson(c, BadRequest, "propertyId must >= 0")
+		return
+	}
+	propertyId, _ := strconv.Atoi(propertyIdStr)
+
+	limitStr := c.DefaultQuery("limit", "10")
+	offsetStr := c.DefaultQuery("offset", "0")
+
+	if !isUintStr(limitStr) {
+		RespJson(c, BadRequest, "limit must >= 0")
+		return
+	}
+	if !isUintStr(offsetStr) {
+		RespJson(c, BadRequest, "offset must >= 0")
+		return
+	}
+
+	limit, _ := strconv.Atoi(limitStr)
+	offset, _ := strconv.Atoi(offsetStr)
+
+	txs, err := s.mgr.GetAddressConfirmedTxs(addr,propertyId, uint(limit), uint(offset))
 	if err != nil {
 		RespJson(c, InternalServerError, err.Error())
 		return
