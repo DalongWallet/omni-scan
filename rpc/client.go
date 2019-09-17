@@ -77,7 +77,7 @@ func NewOmniClient(config *ConnConfig) *OmniClient {
 func newHTTPClient() *http.Client {
 	return &http.Client{
 		Transport: &http.Transport{
-			ResponseHeaderTimeout: 120 * time.Second,
+			ResponseHeaderTimeout: 60 * time.Second,
 			ExpectContinueTimeout: 4 * time.Second,
 			IdleConnTimeout:       5 * 60 * time.Second,
 		},
