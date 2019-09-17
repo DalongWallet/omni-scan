@@ -97,6 +97,9 @@ func (w *Worker) Run() {
 			batch := db.NewBatch()
 			txQueue := NewTaskQueue(txIdList)
 			for !txQueue.AllFinished() {
+				if w.isDone() {
+					return
+				}
 				txId := txQueue.GetTask()
 				tx, err := w.rpcClient.GetTransaction(txId)
 				if err != nil {
@@ -125,6 +128,9 @@ func (w *Worker) Run() {
 
 				addrQueue := NewTaskQueue(addrs)
 				for !addrQueue.AllFinished() {
+					if w.isDone() {
+						return
+					}
 					addr := addrQueue.GetTask()
 
 					key := models.AddrPropertyTxKey(addr, tx.PropertyId, tx.TxId)
