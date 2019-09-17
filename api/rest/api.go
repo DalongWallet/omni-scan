@@ -56,6 +56,34 @@ func (s *Server) GetTransactionById(c *gin.Context) {
 	RespJson(c, OK, tx)
 }
 
+func (s *Server) GetAddressPropertyBalance(c *gin.Context) {
+	addr := c.Query("address")
+	if addr == "" {
+		RespJson(c, BadRequest, "require address")
+		return
+	}
+	propertyIdStr := c.Query("propertyId")
+	if propertyIdStr == "" {
+		RespJson(c, BadRequest, "require propertyId")
+		return
+	}
+	if !isUintStr(propertyIdStr) {
+		RespJson(c, BadRequest, "propertyId must >= 0")
+		return
+	}
+	propertyId, _ := strconv.Atoi(propertyIdStr)
+
+	balance := models.PropertyTokenBalance{
+		PropertyId: propertyId,
+	}
+	if err := balance.Load(s.storage, addr, propertyId); err != nil {
+		RespJson(c, InternalServerError, err.Error())
+		return
+	}
+
+	RespJson(c, OK, balance)
+}
+
 func (s *Server) GetAddressBalance(c *gin.Context) {
 	addr := c.Query("address")
 	if addr == "" {
