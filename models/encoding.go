@@ -2,7 +2,10 @@ package models
 
 import (
 	"fmt"
+	"github.com/json-iterator/go"
+	"github.com/DalongWallet/omni-scan/storage/leveldb"
 	"github.com/golang/protobuf/proto"
+	"github.com/syndtr/goleveldb/leveldb/errors"
 )
 
 const (
@@ -37,5 +40,24 @@ func Encode(v proto.Message) ([]byte, error) {
 
 func Decode(data []byte, v proto.Message) error {
 	return proto.Unmarshal(data, v)
+}
+
+func Load(store *leveldb.LevelStorage, key string, v interface{}) (ok bool, err error) {
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	var data []byte
+	data, err = store.Get(key)
+	switch err {
+	case errors.ErrNotFound:
+		ok = false
+		return
+	case nil:
+		ok = true
+		if err = json.Unmarshal(data, v); err != nil {
+			ok = false
+		}
+		return
+	default:
+		return
+	}
 }
 

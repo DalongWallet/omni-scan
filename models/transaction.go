@@ -4,7 +4,9 @@ import (
 	"github.com/json-iterator/go"
 	"github.com/DalongWallet/omni-scan/storage/leveldb"
 )
+
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
+
 /*
 {
   "txid": "2f51deda0dc3d93ee3f05a0d5c8e339e1e290b00784d2617f86c8d0391747fed",
@@ -62,19 +64,8 @@ func (m *Transaction) Save(store *leveldb.LevelStorage) error {
 	return store.Set(TxKey(m.TxId), data)
 }
 
-func (m *Transaction) Load(store *leveldb.LevelStorage, txid string) error {
-	data, err := store.Get(TxKey(txid))
-	if err != nil {
-		return err
-	}
-	if len(data) == 0 {
-		return ErrorNotFound
-	}
-	err = m.Decode(data)
-	if err != nil {
-		return err
-	}
-	return nil
+func (m *Transaction) Load(store *leveldb.LevelStorage, txid string) (bool, error) {
+	return Load(store, TxKey(txid), m)
 }
 
 type TxByTxidSlice []*Transaction

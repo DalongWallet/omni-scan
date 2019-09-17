@@ -43,8 +43,13 @@ func (s *Server) GetTransactionById(c *gin.Context) {
 	}
 
 	var tx models.Transaction
-	if err := tx.Load(s.storage, txId); err != nil {
+	if ok, err := tx.Load(s.storage, txId); !ok {
 		RespJson(c, InternalServerError, err.Error())
+		return
+	}
+
+	if tx.TxId == "" {
+		RespJson(c, OK, "tx not exist")
 		return
 	}
 
