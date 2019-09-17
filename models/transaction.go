@@ -1,9 +1,10 @@
 package models
 
 import (
+	"github.com/json-iterator/go"
 	"github.com/DalongWallet/omni-scan/storage/leveldb"
 )
-
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 /*
 {
   "txid": "2f51deda0dc3d93ee3f05a0d5c8e339e1e290b00784d2617f86c8d0391747fed",
@@ -50,7 +51,7 @@ func (m *Transaction) Encode() ([]byte, error) {
 }
 
 func (m *Transaction) Decode(data []byte) error {
-	return Decode(data, m)
+	return json.Unmarshal(data, m)
 }
 
 func (m *Transaction) Save(store *leveldb.LevelStorage) error {
