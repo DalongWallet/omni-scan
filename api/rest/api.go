@@ -48,11 +48,6 @@ func (s *Server) GetTransactionById(c *gin.Context) {
 		return
 	}
 
-	if tx.TxId == "" {
-		RespJson(c, OK, "transaction not exist")
-		return
-	}
-
 	RespJson(c, OK, tx)
 }
 
@@ -73,9 +68,7 @@ func (s *Server) GetAddressPropertyBalance(c *gin.Context) {
 	}
 	propertyId, _ := strconv.Atoi(propertyIdStr)
 
-	balance := models.PropertyTokenBalance{
-		PropertyId: propertyId,
-	}
+	var balance models.PropertyTokenBalance
 	if err := balance.Load(s.storage, addr, propertyId); err != nil {
 		RespJson(c, InternalServerError, err.Error())
 		return
@@ -84,16 +77,14 @@ func (s *Server) GetAddressPropertyBalance(c *gin.Context) {
 	RespJson(c, OK, balance)
 }
 
-func (s *Server) GetAddressBalance(c *gin.Context) {
+func (s *Server) GetAddressUsdtBalance(c *gin.Context) {
 	addr := c.Query("address")
 	if addr == "" {
 		RespJson(c, BadRequest, "require address")
 		return
 	}
 
-	balance := models.PropertyTokenBalance{
-		PropertyId:OmniPropertyUSDT,
-	}
+	var balance models.PropertyTokenBalance
 	if err := balance.Load(s.storage, addr, OmniPropertyUSDT); err != nil {
 		RespJson(c, InternalServerError, err.Error())
 		return
