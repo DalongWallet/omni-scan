@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"bytes"
-	"encoding/json"
 	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"

@@ -24,27 +24,26 @@ import (
   "block": 300092,
   "confirmations": 64104
 }
- */
+*/
 type Transaction struct {
-	TxId  			string `json:"txid"`
-	Fee 			string `json:"fee"`
-	SendingAddress 	string `json:"sendingaddress"`
+	TxId             string `json:"txid"`
+	Fee              string `json:"fee"`
+	SendingAddress   string `json:"sendingaddress"`
 	ReferenceAddress string `json:"referenceaddress"`
-	IsMine 			bool `json:"ismine"`
-	Version 		int `json:"version"`
-	TypeInt 		int `json:"type_int"`
-	Type 			string `json:"type"`
-	PropertyId 		int `json:"propertyid"`
-	Divisible  		bool `json:"divisible"`
-	Amount 			string `json:"amount"`
-	Valid  			bool `json:"valid"`
-	BlockHash 		string `json:"blockhash"`
-	BlockTime 		int64 `json:"blocktime"`
-	PositionInBlock int `json:"positioninblock"`
-	Block 			int64 `json:"block"`
-	Confirmations  	int64 `json:"confirmations"`
+	IsMine           bool   `json:"ismine"`
+	Version          int    `json:"version"`
+	TypeInt          int    `json:"type_int"`
+	Type             string `json:"type"`
+	PropertyId       int    `json:"propertyid"`
+	Divisible        bool   `json:"divisible"`
+	Amount           string `json:"amount"`
+	Valid            bool   `json:"valid"`
+	BlockHash        string `json:"blockhash"`
+	BlockTime        int64  `json:"blocktime"`
+	PositionInBlock  int    `json:"positioninblock"`
+	Block            int64  `json:"block"`
+	Confirmations    int64  `json:"confirmations"`
 }
-
 
 func (m *Transaction) Encode() ([]byte, error) {
 	return Encode(m)
@@ -54,7 +53,7 @@ func (m *Transaction) Decode(data []byte) error {
 	return Decode(data, m)
 }
 
-func (m *Transaction) Save(store leveldb.LevelStorage) error {
+func (m *Transaction) Save(store *leveldb.LevelStorage) error {
 	data, err := m.Encode()
 	if err != nil {
 		return err
@@ -62,7 +61,7 @@ func (m *Transaction) Save(store leveldb.LevelStorage) error {
 	return store.Set(TxKey(m.TxId), data)
 }
 
-func (m *Transaction) Load(store leveldb.LevelStorage, txid string) error {
+func (m *Transaction) Load(store *leveldb.LevelStorage, txid string) error {
 	data, err := store.Get(TxKey(txid))
 	if err != nil {
 		return err
@@ -70,7 +69,7 @@ func (m *Transaction) Load(store leveldb.LevelStorage, txid string) error {
 	if len(data) == 0 {
 		return ErrorNotFound
 	}
-	err = m.Decode([]byte(data))
+	err = m.Decode(data)
 	if err != nil {
 		return err
 	}

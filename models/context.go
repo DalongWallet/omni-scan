@@ -7,12 +7,13 @@ import (
 
 // key:  context
 type Context struct {
-	BlockHeight 		int64 `json:"block_height"`
-	BlockHash  			string `json:"block_hash"`
-	BlockTotalTx   		int32 `json:"block_total_tx"`
-	BlockProcessedTx 	int32 `json:"block_processed_tx"`
-	TotalTx 			int64 `json:"total_tx"`
-	TotalTxNode 		int64 `json:"total_tx_node"`
+	OmniCoreVersion    string `json:"omnicoreversion"`
+	BitcoinCoreVersion string `json:"bitcoincoreversion"`
+	BlockHeight        int64  `json:"block"`
+	BlockTime          int64  `json:"blocktime"`
+	BlockTransactions  int64  `json:"blocktransactions"`
+	TotalTrades        int64  `json:"totaltrades"`
+	TotalTransactions  int64  `json:"totaltransactions"`
 }
 
 func (m *Context) Reset() {
@@ -36,37 +37,44 @@ func (m *Context) GetBlockHeight() int64 {
 	return 0
 }
 
-func (m *Context) GetBlockHash() string {
+func (m *Context) GetOmniCoreVersion() string {
 	if m != nil {
-		return m.BlockHash
+		return m.OmniCoreVersion
 	}
 	return ""
 }
 
-func (m *Context) GetBlockTotalTx() int32 {
+func (m *Context) GetBitcoinCoreVersion() string {
 	if m != nil {
-		return m.BlockTotalTx
+		return m.BitcoinCoreVersion
+	}
+	return ""
+}
+
+func (m *Context) GetBlockTime() int64 {
+	if m != nil {
+		return m.BlockTime
 	}
 	return 0
 }
 
-func (m *Context) GetBlockProcessedTx() int32 {
+func (m *Context) GetBlockTransactions() int64 {
 	if m != nil {
-		return m.BlockProcessedTx
+		return m.BlockTransactions
 	}
 	return 0
 }
 
-func (m *Context) GetTotalTx() int64 {
+func (m *Context) GetTotalTransactions() int64 {
 	if m != nil {
-		return m.TotalTx
+		return m.TotalTransactions
 	}
 	return 0
 }
 
-func (m *Context) GetTotalTxNode() int64 {
+func (m *Context) GetTotalTrades() int64 {
 	if m != nil {
-		return m.TotalTxNode
+		return m.TotalTrades
 	}
 	return 0
 }
@@ -79,29 +87,23 @@ func (m *Context) Decode(data []byte) error {
 	return Decode(data, m)
 }
 
-func (m *Context) Save(store leveldb.LevelStorage, key string) error {
+func (m *Context) Save(store *leveldb.LevelStorage) error {
 	data, err := m.Encode()
 	if err != nil {
 		return err
 	}
-	if key == "" {
-		key = ContextKey
-	}
-	return store.Set(key, data)
+	return store.Set(ContextKey, data)
 }
 
-func (m *Context) Load(store leveldb.LevelStorage, key string) error {
-	if key == "" {
-		key = ContextKey
-	}
-	data, err := store.Get(key)
+func (m *Context) Load(store *leveldb.LevelStorage) error {
+	data, err := store.Get(ContextKey)
 	if err != nil {
 		return err
 	}
 	if len(data) == 0 {
 		return ErrorNotFound
 	}
-	err = m.Decode([]byte(data))
+	err = m.Decode(data)
 	if err != nil {
 		return err
 	}
@@ -110,12 +112,13 @@ func (m *Context) Load(store leveldb.LevelStorage, key string) error {
 
 func (m *Context) Clone() *Context {
 	newCtx := &Context{
-		BlockHeight:      m.BlockHeight,
-		BlockHash:        m.BlockHash,
-		BlockTotalTx:     m.BlockTotalTx,
-		BlockProcessedTx: m.BlockProcessedTx,
-		TotalTx:          m.TotalTx,
-		TotalTxNode:      m.TotalTxNode,
+		OmniCoreVersion:    m.OmniCoreVersion,
+		BitcoinCoreVersion: m.BitcoinCoreVersion,
+		BlockHeight:        m.BlockHeight,
+		BlockTime:          m.BlockTime,
+		BlockTransactions:  m.BlockTransactions,
+		TotalTrades:        m.TotalTrades,
+		TotalTransactions:  m.TotalTransactions,
 	}
 	return newCtx
 }

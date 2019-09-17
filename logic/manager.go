@@ -3,6 +3,7 @@ package logic
 import (
 	"github.com/DalongWallet/omni-scan/models"
 	"github.com/DalongWallet/omni-scan/storage/leveldb"
+	"sort"
 )
 
 type TxGetter interface {
@@ -16,7 +17,7 @@ type OmniMgr struct {
 	MemPool     *MemPoolMgr
 }
 
-func NewOmniMgr(st leveldb.LevelStorage, mempoolSize int) (*OmniMgr, error) {
+func NewOmniMgr(st *leveldb.LevelStorage, mempoolSize int) (*OmniMgr, error) {
 	m := &OmniMgr{}
 	cfBlock, err := NewConfirmedBlockMgr(st)
 	if err != nil {
@@ -35,9 +36,19 @@ func (m *OmniMgr) GetTx(txid string) (*models.Transaction, error) {
 	return nil, models.ErrorNotFound
 }
 
-func (m *OmniMgr) GetAddressConfirmedTxs(address string, limit uint, offset uint) ([]*models.Transaction, error) {
-	var out []*models.Transaction
-	return out, nil
+func (m *OmniMgr) GetAddressConfirmedTxs(address string, limit uint, offset uint) (confirmTxs []*models.Transaction, err error) {
+	confirmTxs, err = m.ConfirmedTx.GetAddressTxs(address)
+	if err != nil {
+		return
+	}
+	txs := models.TxByTimeDescSlice(confirmTxs)
+	sort.Sort(txs)
+	start, end := int(offset), int(offset+limit)
+	if end > len(txs) - 1 {
+		end = len(txs) -1
+	}
+	confirmTxs = txs[start:end]
+	return
 }
 
 func (m *OmniMgr) GetAddressBalance(address string, propertyId int) (*models.AddressTokenBalance, error) {

@@ -3,6 +3,7 @@ package rest
 import (
 	"errors"
 	. "github.com/DalongWallet/omni-scan/api/rest/response"
+	"github.com/DalongWallet/omni-scan/models"
 	"github.com/gin-gonic/gin"
 	"strconv"
 	"strings"
@@ -14,16 +15,12 @@ func (s *Server) GetBlocksTxHashList(c *gin.Context) {
 	startStr := c.Query("start")
 	endStr := c.Query("end")
 
-	if !isInt(startStr) || !isInt(endStr) {
-		RespJson(c, BadRequest, errors.New("start or end must be int"))
+	if !isUintStr(startStr) || !isUintStr(endStr) {
+		RespJson(c, BadRequest, errors.New("start or end must >= 0"))
 	}
 
 	start, _ := strconv.Atoi(startStr)
 	end, _ := strconv.Atoi(endStr)
-
-	if start < 0 || end < 0 {
-		RespJson(c, BadRequest, errors.New("start or end must be greater than 0"))
-	}
 
 	if start > end {
 		RespJson(c, BadRequest, errors.New("end must be greater than start"))
@@ -45,8 +42,8 @@ func (s *Server) GetTransactionById(c *gin.Context) {
 		return
 	}
 
-	tx, err := s.omniCli.RpcClient.GetTransaction(txId)
-	if err != nil {
+	var tx models.Transaction
+	if err := tx.Load(s.storage, txId); err != nil {
 		RespJson(c, InternalServerError, err.Error())
 		return
 	}
@@ -78,7 +75,16 @@ func (s *Server) GetConfirmedAddressTransactions(c *gin.Context) {
 	}
 
 	limitStr := c.DefaultQuery("limit", "10")
-	offsetStr := c.Query("offset")
+	offsetStr := c.DefaultQuery("offset", "0")
+
+	if !isUintStr(limitStr) {
+		RespJson(c, BadRequest, "limit must >= 0")
+		return
+	}
+	if !isUintStr(offsetStr) {
+		RespJson(c, BadRequest, "offset must >= 0")
+		return
+	}
 
 	limit, _ := strconv.Atoi(limitStr)
 	offset, _ := strconv.Atoi(offsetStr)

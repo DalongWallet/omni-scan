@@ -43,12 +43,17 @@ func NewServer(port int) *Server {
 		RpcClient: rpc.DefaultOmniClient,
 	}
 	worker := omnicore.NewWorker(storage, omniCli.RpcClient)
+	mgr, err := logic.NewOmniMgr(storage, 64)
+	if err != nil {
+		panic(err)
+	}
 
 	server := &Server{
 		storage: storage,
 		httpServer: httpServer,
 		omniCli: omniCli,
 		worker: worker,
+		mgr: mgr,
 	}
 	server.initRouter(engine)
 
@@ -69,7 +74,7 @@ func (s *Server) Run() int {
 	startScanService := func() {
 		wg.Add(1)
 		defer wg.Done()
-		logrus.Println("Start omni-scan scan and save data")
+		logrus.Println("Start omni-scan Scan service")
 		s.worker.Run()
 		logrus.Println("scan service shutdown")
 	}

@@ -1,11 +1,13 @@
 package rpc
 
 import (
-	"encoding/json"
+	"github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"github.com/DalongWallet/omni-scan/models"
 	"reflect"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 func (client *OmniClient) GetLatestBlockInfo() (block models.OmniInfoResult, err error) {
 	cmd := GetInfoCommand{}

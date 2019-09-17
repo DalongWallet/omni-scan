@@ -6,7 +6,7 @@ import (
 )
 
 type ConfirmedTxMgr struct {
-	storage  		leveldb.LevelStorage
+	storage  		*leveldb.LevelStorage
 	ctx  			*models.Context
 }
 
@@ -15,12 +15,12 @@ type TxAddr struct {
 	Type 		uint32
 }
 
-func NewConfirmedBlockMgr(storage leveldb.LevelStorage) (*ConfirmedTxMgr, error) {
+func NewConfirmedBlockMgr(storage *leveldb.LevelStorage) (*ConfirmedTxMgr, error) {
 	m := ConfirmedTxMgr {
 		storage:  storage,
 	}
 	ctx := &models.Context{}
-	err := ctx.Load(storage, "")
+	err := ctx.Load(storage)
 	if err != nil && err != models.ErrorNotFound {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (m *ConfirmedTxMgr) SaveTx(tx *models.Transaction) error {
 	return err
 }
 
-func (m *ConfirmedTxMgr) GetAddressTxs(addr string, limit uint, order int, preKey string) {
-
+func (m *ConfirmedTxMgr) GetAddressTxs(addr string) ([]*models.Transaction, error) {
+	return []*models.Transaction{}, nil
 }
 

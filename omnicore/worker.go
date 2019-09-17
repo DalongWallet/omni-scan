@@ -2,11 +2,11 @@ package omnicore
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/DalongWallet/omni-scan/models"
 	"github.com/DalongWallet/omni-scan/rpc"
 	"github.com/DalongWallet/omni-scan/storage/leveldb"
+	"github.com/json-iterator/go"
 	"github.com/sirupsen/logrus"
 	"github.com/syndtr/goleveldb/leveldb/errors"
 	"io"
@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"time"
 )
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 type Worker struct {
 	storage *leveldb.LevelStorage
