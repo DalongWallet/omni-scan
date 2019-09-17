@@ -58,7 +58,7 @@ func (m *ConfirmedTxMgr) GetAddressTxs(addr string, propertyId int) (txs []*mode
 	}
 
 	for _, one := range data {
-		var tx *models.Transaction
+		tx := &models.Transaction{}
 		if err = json.Unmarshal(one, tx); err != nil {
 			return
 		}
