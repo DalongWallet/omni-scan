@@ -84,7 +84,7 @@ func (w *Worker) Run() {
 		recordNums := 0
 		start := time.Now()
 
-		fmt.Println("scan:", startScanBlockHeight,"-", endScanBlockHeight)
+		infoLogger.Info("scan:", startScanBlockHeight,"-", endScanBlockHeight)
 		txIdList, err := w.rpcClient.ListBlocksTransactions(startScanBlockHeight, endScanBlockHeight)
 		if err != nil {
 			if err.Error() != "Work queue depth exceeded" {
