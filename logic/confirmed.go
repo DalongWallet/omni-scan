@@ -19,12 +19,12 @@ func NewConfirmedBlockMgr(storage *leveldb.LevelStorage) (*ConfirmedTxMgr, error
 	m := ConfirmedTxMgr {
 		storage:  storage,
 	}
-	ctx := &models.Context{}
-	err := ctx.Load(storage)
-	if err != nil && err != models.ErrorNotFound {
-		return nil, err
-	}
-	m.ctx = ctx
+	//ctx := &models.Context{}
+	//err := ctx.Load(storage)
+	//if err != nil && err != models.ErrorNotFound {
+	//	return nil, err
+	//}
+	//m.ctx = ctx
 
 	return &m, nil
 }
