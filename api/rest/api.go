@@ -43,7 +43,7 @@ func (s *Server) GetTransactionById(c *gin.Context) {
 	}
 
 	var tx models.Transaction
-	if ok, err := tx.Load(s.storage, txId); !ok {
+	if err := tx.Load(s.storage, txId); err != nil {
 		RespJson(c, InternalServerError, err.Error())
 		return
 	}

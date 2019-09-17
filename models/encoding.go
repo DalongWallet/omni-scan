@@ -42,20 +42,15 @@ func Decode(data []byte, v proto.Message) error {
 	return proto.Unmarshal(data, v)
 }
 
-func Load(store *leveldb.LevelStorage, key string, v interface{}) (ok bool, err error) {
+func Load(store *leveldb.LevelStorage, key string, v interface{}) (err error) {
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	var data []byte
 	data, err = store.Get(key)
 	switch err {
 	case errors.ErrNotFound:
-		ok = false
-		return
+		return nil
 	case nil:
-		ok = true
-		if err = json.Unmarshal(data, v); err != nil {
-			ok = false
-		}
-		return
+		return json.Unmarshal(data, v)
 	default:
 		return
 	}

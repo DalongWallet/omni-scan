@@ -64,7 +64,7 @@ func (m *Transaction) Save(store *leveldb.LevelStorage) error {
 	return store.Set(TxKey(m.TxId), data)
 }
 
-func (m *Transaction) Load(store *leveldb.LevelStorage, txid string) (bool, error) {
+func (m *Transaction) Load(store *leveldb.LevelStorage, txid string) (error) {
 	return Load(store, TxKey(txid), m)
 }
 
