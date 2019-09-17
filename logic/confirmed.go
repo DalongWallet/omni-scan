@@ -4,6 +4,7 @@ import (
 	"github.com/DalongWallet/omni-scan/models"
 	"github.com/DalongWallet/omni-scan/storage/leveldb"
 	"github.com/DalongWallet/omni-scan/utils"
+	jsoniter "github.com/json-iterator/go"
 )
 
 type ConfirmedTxMgr struct {
@@ -46,7 +47,23 @@ func (m *ConfirmedTxMgr) SaveTx(tx *models.Transaction) error {
 }
 
 func (m *ConfirmedTxMgr) GetAddressTxs(addr string, propertyId int) (txs []*models.Transaction, err error) {
-	err = utils.Load(m.storage, models.AddrPropertyTxsKey(addr, propertyId), txs)
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	var data [][]byte
+
+	if data, err = m.storage.GetWithPrefix(models.AddrPropertyTxsKey(addr, propertyId)); err != nil {
+		if utils.IsErrorNotFound(err) {
+			err = nil
+		}
+		return
+	}
+
+	for _, one := range data {
+		var tx *models.Transaction
+		if err = json.Unmarshal(one, tx); err != nil {
+			return
+		}
+		txs = append(txs, tx)
+	}
 	return
 }
 
