@@ -68,14 +68,19 @@ func (w *Worker) Run() {
 			return
 		}
 
-		// TODO: save LatestBlockInfo
-		latestBlock, err := w.rpcClient.GetLatestBlockInfo()
-		if err != nil {
-			if err.Error() != "Work queue depth exceeded" {
-				errLogger.Error(fmt.Sprintf("GetInfo Failed, %+v \n\n", err))
+		var latestBlock models.OmniInfoResult
+		if endScanBlockHeight < 595373 {
+			latestBlock.BlockHeight = 595373
+		}else {
+			// TODO: save LatestBlockInfo
+			latestBlock, err = w.rpcClient.GetLatestBlockInfo()
+			if err != nil {
+				if err.Error() != "Work queue depth exceeded" {
+					errLogger.Error(fmt.Sprintf("GetInfo Failed, %+v \n\n", err))
+				}
+				time.Sleep(1)
+				continue
 			}
-			time.Sleep(1)
-			continue
 		}
 
 		increment = decimal.New(1000,0).Mul(decimal.NewFromFloat(math.Pow(0.4, float64((endScanBlockHeight - 200000) / 100000 )))).IntPart()
