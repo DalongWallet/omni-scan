@@ -11,7 +11,7 @@ require (
 	github.com/judwhite/go-svc v1.1.2 // indirect
 	github.com/mitchellh/cli v1.0.0
 	github.com/pkg/errors v0.8.1
-	github.com/shopspring/decimal v0.0.0-20190905144223-a36b5d85f337 // indirect
+	github.com/shopspring/decimal v0.0.0-20190905144223-a36b5d85f337
 	github.com/sirupsen/logrus v1.4.2
 	github.com/syndtr/goleveldb v1.0.0
 )
