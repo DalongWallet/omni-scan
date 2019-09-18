@@ -123,8 +123,8 @@ func (client *OmniClient) SendRawTransaction(from string, hex string) (txHash st
 	if result, err = client.Exec(cmd); err != nil {
 		return
 	}
-
-	return string(result), nil
+	txHash = string(result)
+	return
 }
 
 func (client *OmniClient) DecodeTransaction(rawtx string) (tx models.Transaction, err error){

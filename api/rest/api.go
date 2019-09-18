@@ -187,7 +187,19 @@ func (s *Server) SendRawTransaction(c *gin.Context) {
 		return
 	}
 
-	tx, err := s.omniCli.RpcClient.DecodeTransaction(txHash)
+	RespJson(c, OK, txHash)
+}
+
+func (s *Server) DecodeRawTransaction(c *gin.Context) {
+	txHex := c.Query("txHex")
+	txHex = strings.TrimSpace(txHex)
+	txHex = strings.TrimPrefix(txHex, "0x")
+	if txHex == "" {
+		RespJson(c, BadRequest, "txHex invalid")
+		return
+	}
+
+	tx, err := s.omniCli.RpcClient.DecodeTransaction(txHex)
 	if err != nil {
 		RespJson(c, BadRequest, err.Error())
 		return
