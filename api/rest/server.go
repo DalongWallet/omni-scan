@@ -107,5 +107,5 @@ func (s *Server) initRouter(r gin.IRouter) {
 	r.GET("/api/v1/usdtBalance", s.GetAddressUsdtBalance)
 	r.GET("/api/v1/propertyBalance", s.GetAddressPropertyBalance)
 	r.POST("/api/v1/sendRawTx", s.SendRawTransaction)
-
+	r.POST("/api/v1/decodeRawTx", s.DecodeRawTransaction)
 }
