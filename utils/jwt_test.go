@@ -3,19 +3,15 @@ package utils
 import (
 	"fmt"
 	"testing"
+	"time"
 )
 
 func TestGenerateToken(t *testing.T) {
-	token, err := GenerateToken("togreat")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	token, _ := GenerateToken("togreat", 30 * 24 * time.Hour)
 	fmt.Println(token)
-	c, err := ParseToken(token)
+	claim, err := ParseToken(token)
 	if err != nil {
-		fmt.Println(err)
-		return
+		panic(err)
 	}
-	fmt.Printf("%+v", c)
+	fmt.Printf("%+v \n", claim)
 }

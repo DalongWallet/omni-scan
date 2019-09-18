@@ -13,9 +13,9 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-func GenerateToken(apikey string) (string, error) {
+func GenerateToken(apikey string, expire time.Duration) (string, error) {
 	nowTime := time.Now()
-	expireTime := nowTime.Add(20 * time.Second)
+	expireTime := nowTime.Add(expire)
 
 	claims := Claims{
 		apikey,

@@ -2,11 +2,11 @@ package rpc
 
 import (
 	"bytes"
-	"encoding/json"
 	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"time"
 )
 
 var DefaultOmniClient = &OmniClient{
@@ -46,7 +46,7 @@ func (c *OmniClient) Exec(cmd command) ([]byte, error) {
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return []byte{}, errors.Wrap(err, "SendRequest failed")
+		return []byte{}, err
 	}
 	defer resp.Body.Close()
 
@@ -76,10 +76,10 @@ func NewOmniClient(config *ConnConfig) *OmniClient {
 
 func newHTTPClient() *http.Client {
 	return &http.Client{
-		//Transport: &http.Transport{
-		//	ResponseHeaderTimeout: 30 * time.Second,
-		//	ExpectContinueTimeout: 4 * time.Second,
-		//	IdleConnTimeout:       5 * 60 * time.Second,
-		//},
+		Transport: &http.Transport{
+			ResponseHeaderTimeout: 60 * time.Second,
+			ExpectContinueTimeout: 4 * time.Second,
+			IdleConnTimeout:       5 * 60 * time.Second,
+		},
 	}
 }

@@ -1,6 +1,12 @@
 package models
 
-import "github.com/DalongWallet/omni-scan/storage"
+import (
+	"github.com/DalongWallet/omni-scan/utils"
+	"github.com/json-iterator/go"
+	"github.com/DalongWallet/omni-scan/storage/leveldb"
+)
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 /*
 {
@@ -22,25 +28,25 @@ import "github.com/DalongWallet/omni-scan/storage"
   "block": 300092,
   "confirmations": 64104
 }
- */
+*/
 type Transaction struct {
-	TxId  			string `json:"txid"`
-	Fee 			string `json:"fee"`
-	SendingAddress 	string `json:"sendingaddress"`
+	TxId             string `json:"txid"`
+	Fee              string `json:"fee"`
+	SendingAddress   string `json:"sendingaddress"`
 	ReferenceAddress string `json:"referenceaddress"`
-	IsMine 			bool `json:"ismine"`
-	Version 		int `json:"version"`
-	TypeInt 		int `json:"type_int"`
-	Type 			string `json:"type"`
-	PropertyId 		int `json:"propertyid"`
-	Divisible  		bool `json:"divisible"`
-	Amount 			string `json:"amount"`
-	Valid  			bool `json:"valid"`
-	BlockHash 		string `json:"blockhash"`
-	BlockTime 		int64 `json:"blocktime"`
-	PositionInBlock int `json:"positioninblock"`
-	Block 			int64 `json:"block"`
-	Confirmations  	int64 `json:"confirmations"`
+	IsMine           bool   `json:"ismine"`
+	Version          int    `json:"version"`
+	TypeInt          int    `json:"type_int"`
+	Type             string `json:"type"`
+	PropertyId       int    `json:"propertyid"`
+	Divisible        bool   `json:"divisible"`
+	Amount           string `json:"amount"`
+	Valid            bool   `json:"valid"`
+	BlockHash        string `json:"blockhash"`
+	BlockTime        int64  `json:"blocktime"`
+	PositionInBlock  int    `json:"positioninblock"`
+	Block            int64  `json:"block"`
+	Confirmations    int64  `json:"confirmations"`
 }
 
 func (m *Transaction) Encode() ([]byte, error) {
@@ -48,30 +54,19 @@ func (m *Transaction) Encode() ([]byte, error) {
 }
 
 func (m *Transaction) Decode(data []byte) error {
-	return Decode(data, m)
+	return json.Unmarshal(data, m)
 }
 
-func (m *Transaction) Save(store storage.Storage) error {
+func (m *Transaction) Save(store *leveldb.LevelStorage) error {
 	data, err := m.Encode()
 	if err != nil {
 		return err
 	}
-	return store.Set(TxKey(m.TxId), string(data))
+	return store.Set(TxKey(m.TxId), data)
 }
 
-func (m *Transaction) Load(store storage.Storage, txid string) error {
-	data, err := store.Get(TxKey(txid))
-	if err != nil {
-		return err
-	}
-	if data == "" {
-		return ErrorNotFound
-	}
-	err = m.Decode([]byte(data))
-	if err != nil {
-		return err
-	}
-	return nil
+func (m *Transaction) Load(store *leveldb.LevelStorage, txid string) (error) {
+	return utils.Load(store, TxKey(txid), m)
 }
 
 type TxByTxidSlice []*Transaction

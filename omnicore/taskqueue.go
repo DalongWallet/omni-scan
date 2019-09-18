@@ -1,4 +1,4 @@
-package scan
+package omnicore
 
 
 
@@ -29,7 +29,7 @@ func (tq *TaskQueue) AllFinished() bool {
 	return false
 }
 
-// TODO: 加上最大尝试次数
+// TODO: add most retry times
 func NewTaskQueue(tasks []string) *TaskQueue {
 	return &TaskQueue{
 		tasks: tasks,

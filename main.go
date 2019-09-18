@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/DalongWallet/omni-scan/api/rest"
 	"github.com/DalongWallet/omni-scan/conf"
-	"github.com/DalongWallet/omni-scan/scan"
 	"github.com/mitchellh/cli"
 	"log"
 	"os"
@@ -17,7 +16,6 @@ func main() {
 	c := cli.NewCLI("omni-scan", "0.0.1")
 	c.Args = os.Args[1:]
 	c.Commands = map[string]cli.CommandFactory{
-		"ScanData": ScanData,
 		"RestApi":  RunRestApi,
 	}
 	exitStatus, err := c.Run()
@@ -27,9 +25,6 @@ func main() {
 	os.Exit(exitStatus)
 }
 
-func ScanData() (cli.Command, error) {
-	return scan.New(), nil
-}
 
 func RunRestApi() (cli.Command, error) {
 	return rest.New(), nil
