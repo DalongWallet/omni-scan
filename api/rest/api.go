@@ -167,7 +167,7 @@ func (s *Server) GetConfirmedAddressPropertyTransactions(c *gin.Context) {
 }
 
 func (s *Server) SendRawTransaction(c *gin.Context) {
-	hex := c.Query("txHex")
+	hex := c.PostForm("txHex")
 	hex = strings.TrimSpace(hex)
 	hex = strings.TrimPrefix(hex, "0x")
 	if hex == "" {
@@ -175,7 +175,7 @@ func (s *Server) SendRawTransaction(c *gin.Context) {
 		return
 	}
 
-	addr := c.Query("addr")
+	addr := c.PostForm("addr")
 	if addr == "" {
 		RespJson(c, BadRequest, "require sender address")
 		return
@@ -191,7 +191,7 @@ func (s *Server) SendRawTransaction(c *gin.Context) {
 }
 
 func (s *Server) DecodeRawTransaction(c *gin.Context) {
-	txHex := c.Query("txHex")
+	txHex := c.PostForm("txHex")
 	txHex = strings.TrimSpace(txHex)
 	txHex = strings.TrimPrefix(txHex, "0x")
 	if txHex == "" {
