@@ -78,10 +78,14 @@ func (w *Worker) Run() {
 			continue
 		}
 
-		increment = decimal.New(1000,0).Mul(decimal.NewFromFloat(math.Pow(0.25, float64((endScanBlockHeight - 200000) / 100000 )))).IntPart()
-		if increment == 0 || latestBlock.BlockHeight - endScanBlockHeight <= 100  {
+		increment = decimal.New(1000,0).Mul(decimal.NewFromFloat(math.Pow(0.4, float64((endScanBlockHeight - 200000) / 100000 )))).IntPart()
+		if increment == 0 || latestBlock.BlockHeight - endScanBlockHeight <= 10  {
 			increment = 1
 		}
+		if endScanBlockHeight + increment >= latestBlock.BlockHeight {
+			increment = endScanBlockHeight + increment - latestBlock.BlockHeight
+		}
+
 		startScanBlockHeight, endScanBlockHeight = endScanBlockHeight+1, endScanBlockHeight+increment
 
 		if startScanBlockHeight > latestBlock.BlockHeight {
