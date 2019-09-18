@@ -7,11 +7,9 @@ import (
 	"github.com/DalongWallet/omni-scan/rpc"
 	"github.com/DalongWallet/omni-scan/storage/leveldb"
 	"github.com/json-iterator/go"
-	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/syndtr/goleveldb/leveldb/errors"
 	"io"
-	"math"
 	"os"
 	"strconv"
 	"time"
@@ -83,10 +81,14 @@ func (w *Worker) Run() {
 			}
 		}
 
-		increment = decimal.New(1000,0).Mul(decimal.NewFromFloat(math.Pow(0.4, float64((endScanBlockHeight - 200000) / 100000 )))).IntPart()
-		if increment == 0 || latestBlock.BlockHeight - endScanBlockHeight <= 10  {
+		//increment = decimal.New(1000,0).Mul(decimal.NewFromFloat(math.Pow(0.4, float64((endScanBlockHeight - 200000) / 100000 )))).IntPart()
+		//if increment == 0 || latestBlock.BlockHeight - endScanBlockHeight <= 10  {
+		//	increment = 1
+		//}
+		if latestBlock.BlockHeight - endScanBlockHeight < 10 {
 			increment = 1
 		}
+
 		if endScanBlockHeight + increment >= latestBlock.BlockHeight {
 			increment = endScanBlockHeight + increment - latestBlock.BlockHeight
 		}
