@@ -18,7 +18,6 @@ func (s *Server) GetBlocksTxHashList(c *gin.Context) {
 	if !isUintStr(startStr) || !isUintStr(endStr) {
 		RespJson(c, BadRequest, errors.New("start or end must >= 0"))
 	}
-
 	start, _ := strconv.Atoi(startStr)
 	end, _ := strconv.Atoi(endStr)
 
@@ -167,10 +166,10 @@ func (s *Server) GetConfirmedAddressPropertyTransactions(c *gin.Context) {
 }
 
 func (s *Server) SendRawTransaction(c *gin.Context) {
-	hex := c.PostForm("txHex")
-	hex = strings.TrimSpace(hex)
-	hex = strings.TrimPrefix(hex, "0x")
-	if hex == "" {
+	txHex := c.PostForm("txHex")
+	txHex = strings.TrimSpace(txHex)
+	txHex = strings.TrimPrefix(txHex, "0x")
+	if txHex == "" {
 		RespJson(c, BadRequest, "txHex invalid")
 		return
 	}
@@ -181,7 +180,12 @@ func (s *Server) SendRawTransaction(c *gin.Context) {
 		return
 	}
 
-	txHash, err := s.omniCli.RpcClient.SendRawTransaction(addr, hex)
+	if _, err := s.omniCli.RpcClient.DecodeTransaction(txHex); err != nil {
+		RespJson(c, BadRequest, err.Error())
+		return
+	}
+
+	txHash, err := s.omniCli.RpcClient.SendRawTransaction(addr, txHex)
 	if err != nil {
 		RespJson(c, BadRequest, err.Error())
 		return
