@@ -1,7 +1,7 @@
 package response
 
 const (
-	OK = 20000
+	OK = 0
 	BadRequest = 40002
 	ErrorAuthCheckTokenInvalid = 40003
 	ErrorAuthCheckTokenTimetout = 40004
