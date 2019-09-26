@@ -113,6 +113,20 @@ func (client *OmniClient) GetAllBalancesForAddress(address string) (propertyToke
 	return
 }
 
+func (client *OmniClient) GetPropertyBalanceForAddress(address string, propertyId int) (propertyBalance models.PropertyTokenBalance, err error) {
+	var allPropertyBalances []models.PropertyTokenBalance
+	if allPropertyBalances, err = client.GetAllBalancesForAddress(address); err != nil {
+		return
+	}
+	for _, one := range allPropertyBalances {
+		if one.PropertyId == propertyId {
+			propertyBalance = one
+			return
+		}
+	}
+	return
+}
+
 func (client *OmniClient) SendRawTransaction(from string, hex string) (txHash string, err error) {
 	cmd := SendRawTransactionCommand {
 		FromAddress: 	from,

@@ -4,6 +4,7 @@ import (
 	"errors"
 	. "github.com/DalongWallet/omni-scan/api/rest/response"
 	"github.com/DalongWallet/omni-scan/models"
+	"github.com/DalongWallet/omni-scan/rpc"
 	"github.com/DalongWallet/omni-scan/utils"
 	"github.com/gin-gonic/gin"
 	"strconv"
@@ -12,6 +13,8 @@ import (
 )
 
 const OmniPropertyUSDT = 31
+
+var rpcClient = rpc.DefaultOmniClient
 
 func (s *Server) GenerateToken(c *gin.Context) {
 	apiKey := c.Query("apikey")
@@ -95,6 +98,21 @@ func (s *Server) GetAddressPropertyBalance(c *gin.Context) {
 		return
 	}
 
+	RespJson(c, OK, balance)
+}
+
+func (s *Server) GetAddressUsdtBalanceByRpc(c *gin.Context) {
+	addr := c.Query("address")
+	if addr == "" {
+		RespJson(c, BadRequest, "require address")
+		return
+	}
+
+	balance, err := rpcClient.GetPropertyBalanceForAddress(addr, OmniPropertyUSDT)
+	if err != nil {
+		RespJson(c, InternalServerError, err.Error())
+		return
+	}
 	RespJson(c, OK, balance)
 }
 
