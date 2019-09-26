@@ -4,12 +4,34 @@ import (
 	"errors"
 	. "github.com/DalongWallet/omni-scan/api/rest/response"
 	"github.com/DalongWallet/omni-scan/models"
+	"github.com/DalongWallet/omni-scan/utils"
 	"github.com/gin-gonic/gin"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const OmniPropertyUSDT = 31
+
+func (s *Server) GenerateToken(c *gin.Context) {
+	apiKey := c.Query("apikey")
+	expire := c.DefaultQuery("expire", "10")
+
+	// second
+	expireTime, err := strconv.Atoi(expire)
+	if err != nil {
+		RespJson(c, BadRequest, err.Error())
+		return
+	}
+
+	token, err := utils.GenerateToken(apiKey, time.Duration(expireTime) * time.Second)
+	if err != nil {
+		RespJson(c, BadRequest, err.Error())
+		return
+	}
+
+	RespJson(c, OK, token)
+}
 
 func (s *Server) GetBlocksTxHashList(c *gin.Context) {
 	startStr := c.Query("start")
