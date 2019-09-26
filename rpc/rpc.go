@@ -1,9 +1,9 @@
 package rpc
 
 import (
+	"github.com/DalongWallet/omni-scan/models"
 	"github.com/json-iterator/go"
 	"github.com/pkg/errors"
-	"github.com/DalongWallet/omni-scan/models"
 	"reflect"
 )
 
@@ -118,9 +118,9 @@ func (client *OmniClient) GetPropertyBalanceForAddress(address string, propertyI
 	if allPropertyBalances, err = client.GetAllBalancesForAddress(address); err != nil {
 		return
 	}
-	for _, one := range allPropertyBalances {
-		if one.PropertyId == propertyId {
-			propertyBalance = one
+	for i := 0; i < len(allPropertyBalances); i++ {
+		if allPropertyBalances[i].PropertyId == propertyId {
+			propertyBalance = allPropertyBalances[i]
 			return
 		}
 	}
@@ -128,9 +128,9 @@ func (client *OmniClient) GetPropertyBalanceForAddress(address string, propertyI
 }
 
 func (client *OmniClient) SendRawTransaction(from string, hex string) (txHash string, err error) {
-	cmd := SendRawTransactionCommand {
-		FromAddress: 	from,
-		Hex: 			hex,
+	cmd := SendRawTransactionCommand{
+		FromAddress: from,
+		Hex:         hex,
 	}
 
 	var result []byte
@@ -141,9 +141,9 @@ func (client *OmniClient) SendRawTransaction(from string, hex string) (txHash st
 	return
 }
 
-func (client *OmniClient) DecodeTransaction(rawtx string) (tx models.Transaction, err error){
-	cmd := DecodeRawTransactionCommand {
-		RawTx: 				rawtx,
+func (client *OmniClient) DecodeTransaction(rawtx string) (tx models.Transaction, err error) {
+	cmd := DecodeRawTransactionCommand{
+		RawTx: rawtx,
 	}
 
 	var result []byte
