@@ -59,7 +59,7 @@ func (w *Worker) Run() {
 	}
 
 	var increment int64 = 1000
-	startScanBlockHeight, endScanBlockHeight := hasScannedBlockHeight, hasScannedBlockHeight
+	startScanBlockHeight, endScanBlockHeight := hasScannedBlockHeight+1, hasScannedBlockHeight+increment
 
 	for {
 		if w.isDone() {
@@ -76,7 +76,7 @@ func (w *Worker) Run() {
 				if err.Error() != "Work queue depth exceeded" {
 					errLogger.Error(fmt.Sprintf("GetInfo Failed, %+v \n\n", err))
 				}
-				time.Sleep(1)
+				time.Sleep(1 * time.Second)
 				continue
 			}
 		}
@@ -85,17 +85,10 @@ func (w *Worker) Run() {
 		//if increment == 0 || latestBlock.BlockHeight - endScanBlockHeight <= 10  {
 		//	increment = 1
 		//}
-		if latestBlock.BlockHeight - endScanBlockHeight < 10 {
-			increment = 1
-		}
 
-		if endScanBlockHeight + increment >= latestBlock.BlockHeight {
-			increment = endScanBlockHeight + increment - latestBlock.BlockHeight
-		}
-
-		startScanBlockHeight, endScanBlockHeight = endScanBlockHeight+1, endScanBlockHeight+increment
 
 		if startScanBlockHeight > latestBlock.BlockHeight {
+			time.Sleep(5 * time.Second)
 			continue
 		}
 
@@ -108,7 +101,7 @@ func (w *Worker) Run() {
 			if err.Error() != "Work queue depth exceeded" {
 				errLogger.Error(fmt.Sprintf("ListBlocksTransactions [%d,%d] Failed,%+v \n\n", startScanBlockHeight, endScanBlockHeight, err))
 			}
-			time.Sleep(1)
+			time.Sleep(1 * time.Second)
 			continue
 		}
 		infoLogger.Info("tx count:", len(txIdList))
@@ -140,7 +133,7 @@ func (w *Worker) Run() {
 				txBytes, err := json.Marshal(tx)
 				if err != nil {
 					errLogger.Error(fmt.Sprintf("Marshal Tx [ %+v ] Failed,%+v \n\n", tx, err))
-					time.Sleep(1)
+					time.Sleep(1 * time.Second)
 					continue
 				}
 				batch.Set(models.TxKey(txId), txBytes)
@@ -160,7 +153,7 @@ func (w *Worker) Run() {
 						if err.Error() != "Work queue depth exceeded" {
 							errLogger.Error(fmt.Sprintf("Txid [%s], Get Address [%s] Balance Failed, %+v \n\n",tx.TxId, addr, err))
 						}
-						time.Sleep(1)
+						time.Sleep(1 * time.Second)
 						continue
 					}
 					for _, one := range addrAllBalances {
@@ -168,7 +161,7 @@ func (w *Worker) Run() {
 						balanceBytes, err := json.Marshal(one)
 						if err != nil {
 							errLogger.Error(fmt.Sprintf("Marshal Balance [ %+v ] Failed, %+v \n\n", one,err))
-							time.Sleep(1)
+							time.Sleep(1 * time.Second)
 							continue
 						}
 						batch.Set(key, balanceBytes)
@@ -183,18 +176,28 @@ func (w *Worker) Run() {
 
 			if err = batch.Commit(); err != nil {
 				errLogger.Error(fmt.Sprintf("%+v \n\n", err))
-				time.Sleep(1)
+				time.Sleep(1 * time.Second)
 				continue
 			}
 
 			if err = db.Set("hasScannedBlockHeight", []byte(strconv.FormatInt(endScanBlockHeight, 10))); err != nil {
 				errLogger.Error(fmt.Sprintf("Cache HasScannedBlockHeight Failed, %+v \n\n", err))
-				time.Sleep(1)
+				time.Sleep(1 * time.Second)
 				continue
 			}
 		}
 
 		infoLogger.Info(fmt.Sprintf("hasScannedBlockHeight: %d, recordNums: %d, use: %s", endScanBlockHeight, recordNums, time.Since(start).String()))
+
+		if latestBlock.BlockHeight - endScanBlockHeight < 10 {
+			increment = 1
+		}
+
+		if endScanBlockHeight + increment >= latestBlock.BlockHeight {
+			increment = endScanBlockHeight + increment - latestBlock.BlockHeight
+		}
+
+		startScanBlockHeight, endScanBlockHeight = endScanBlockHeight+1, endScanBlockHeight+increment
 	}
 }
 

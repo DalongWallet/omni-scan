@@ -4,12 +4,37 @@ import (
 	"errors"
 	. "github.com/DalongWallet/omni-scan/api/rest/response"
 	"github.com/DalongWallet/omni-scan/models"
+	"github.com/DalongWallet/omni-scan/rpc"
+	"github.com/DalongWallet/omni-scan/utils"
 	"github.com/gin-gonic/gin"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const OmniPropertyUSDT = 31
+
+var rpcClient = rpc.DefaultOmniClient
+
+func (s *Server) GenerateToken(c *gin.Context) {
+	apiKey := c.Query("apikey")
+	expire := c.DefaultQuery("expire", "10")
+
+	// second
+	expireTime, err := strconv.Atoi(expire)
+	if err != nil {
+		RespJson(c, BadRequest, err.Error())
+		return
+	}
+
+	token, err := utils.GenerateToken(apiKey, time.Duration(expireTime) * time.Second)
+	if err != nil {
+		RespJson(c, BadRequest, err.Error())
+		return
+	}
+
+	RespJson(c, OK, token)
+}
 
 func (s *Server) GetBlocksTxHashList(c *gin.Context) {
 	startStr := c.Query("start")
@@ -18,7 +43,6 @@ func (s *Server) GetBlocksTxHashList(c *gin.Context) {
 	if !isUintStr(startStr) || !isUintStr(endStr) {
 		RespJson(c, BadRequest, errors.New("start or end must >= 0"))
 	}
-
 	start, _ := strconv.Atoi(startStr)
 	end, _ := strconv.Atoi(endStr)
 
@@ -74,6 +98,21 @@ func (s *Server) GetAddressPropertyBalance(c *gin.Context) {
 		return
 	}
 
+	RespJson(c, OK, balance)
+}
+
+func (s *Server) GetAddressUsdtBalanceByRpc(c *gin.Context) {
+	addr := c.Query("address")
+	if addr == "" {
+		RespJson(c, BadRequest, "require address")
+		return
+	}
+
+	balance, err := rpcClient.GetPropertyBalanceForAddress(addr, OmniPropertyUSDT)
+	if err != nil {
+		RespJson(c, InternalServerError, err.Error())
+		return
+	}
 	RespJson(c, OK, balance)
 }
 
@@ -167,10 +206,10 @@ func (s *Server) GetConfirmedAddressPropertyTransactions(c *gin.Context) {
 }
 
 func (s *Server) SendRawTransaction(c *gin.Context) {
-	hex := c.PostForm("txHex")
-	hex = strings.TrimSpace(hex)
-	hex = strings.TrimPrefix(hex, "0x")
-	if hex == "" {
+	txHex := c.PostForm("txHex")
+	txHex = strings.TrimSpace(txHex)
+	txHex = strings.TrimPrefix(txHex, "0x")
+	if txHex == "" {
 		RespJson(c, BadRequest, "txHex invalid")
 		return
 	}
@@ -181,7 +220,12 @@ func (s *Server) SendRawTransaction(c *gin.Context) {
 		return
 	}
 
-	txHash, err := s.omniCli.RpcClient.SendRawTransaction(addr, hex)
+	if _, err := s.omniCli.RpcClient.DecodeTransaction(txHex); err != nil {
+		RespJson(c, BadRequest, err.Error())
+		return
+	}
+
+	txHash, err := s.omniCli.RpcClient.SendRawTransaction(addr, txHex)
 	if err != nil {
 		RespJson(c, BadRequest, err.Error())
 		return

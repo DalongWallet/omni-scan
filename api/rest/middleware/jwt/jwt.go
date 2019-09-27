@@ -13,6 +13,11 @@ func JWT() gin.HandlerFunc {
 		var code int
 		var data interface{}
 
+		if context.Request.URL.Path == "/api/v1/token" {
+			context.Next()
+			return
+		}
+
 		code = response.OK
 		token := context.Query("token")
 		if token == "" {

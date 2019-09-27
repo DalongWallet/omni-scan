@@ -7,7 +7,7 @@ import (
 )
 
 func TestGenerateToken(t *testing.T) {
-	token, _ := GenerateToken("togreat", 30 * 24 * time.Hour)
+	token, _ := GenerateToken("togreat", 10*12*30*24*time.Hour)
 	fmt.Println(token)
 	claim, err := ParseToken(token)
 	if err != nil {
