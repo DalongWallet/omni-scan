@@ -66,20 +66,27 @@ func (w *Worker) Run() {
 			return
 		}
 
-		var latestBlock models.OmniInfoResult
-		if endScanBlockHeight < 595373 {
-			latestBlock.BlockHeight = 595373
-		}else {
-			// TODO: save LatestBlockInfo
-			latestBlock, err = w.rpcClient.GetLatestBlockInfo()
-			if err != nil {
-				if err.Error() != "Work queue depth exceeded" {
-					errLogger.Error(fmt.Sprintf("GetInfo Failed, %+v \n\n", err))
-				}
-				time.Sleep(1 * time.Second)
-				continue
+		// TODO: save LatestBlockInfo
+		latestBlock, err := w.rpcClient.GetLatestBlockInfo()
+		if err != nil {
+			if err.Error() != "Work queue depth exceeded" {
+				errLogger.Error(fmt.Sprintf("GetInfo Failed, %+v \n\n", err))
 			}
+			time.Sleep(1 * time.Second)
+			continue
 		}
+		latestBlockData, err := json.Marshal(latestBlock)
+		if err != nil {
+			errLogger.Error(fmt.Sprintf("GetInfo Failed, %+v \n\n", err))
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		if err = db.Set("latestBlockInfo", latestBlockData); err != nil {
+			errLogger.Error(fmt.Sprintf("GetInfo Failed, %+v \n\n", err))
+			time.Sleep(1 * time.Second)
+			continue
+		}
+
 
 		//increment = decimal.New(1000,0).Mul(decimal.NewFromFloat(math.Pow(0.4, float64((endScanBlockHeight - 200000) / 100000 )))).IntPart()
 		//if increment == 0 || latestBlock.BlockHeight - endScanBlockHeight <= 10  {
