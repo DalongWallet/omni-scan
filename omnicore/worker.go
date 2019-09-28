@@ -75,6 +75,7 @@ func (w *Worker) Run() {
 			time.Sleep(1 * time.Second)
 			continue
 		}
+		infoLogger.Info("latestBlockHeight:", latestBlock.BlockHeight)
 		latestBlockData, err := json.Marshal(latestBlock)
 		if err != nil {
 			errLogger.Error(fmt.Sprintf("GetInfo Failed, %+v \n\n", err))
