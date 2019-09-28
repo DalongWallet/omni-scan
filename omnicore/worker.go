@@ -201,7 +201,7 @@ func (w *Worker) Run() {
 		}
 
 		if endScanBlockHeight + increment >= latestBlock.BlockHeight {
-			increment = endScanBlockHeight + increment - latestBlock.BlockHeight
+			increment = latestBlock.BlockHeight - endScanBlockHeight
 		}
 
 		startScanBlockHeight, endScanBlockHeight = endScanBlockHeight+1, endScanBlockHeight+increment
