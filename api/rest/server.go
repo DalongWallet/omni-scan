@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"context"
 	"fmt"
 	"github.com/DalongWallet/omni-scan/api/rest/middleware/jwt"
 	"github.com/DalongWallet/omni-scan/logic"
@@ -14,7 +15,6 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
-	"context"
 )
 
 type Server struct {
@@ -30,7 +30,6 @@ func NewServer(port int) *Server {
 
 	engine := gin.Default()
 	engine.Use(jwt.JWT())
-
 
 	addr := fmt.Sprintf("127.0.0.1:%d", port)
 	httpServer := &http.Server{
@@ -49,11 +48,11 @@ func NewServer(port int) *Server {
 	}
 
 	server := &Server{
-		storage: storage,
+		storage:    storage,
 		httpServer: httpServer,
-		omniCli: omniCli,
-		worker: worker,
-		mgr: mgr,
+		omniCli:    omniCli,
+		worker:     worker,
+		mgr:        mgr,
 	}
 	server.initRouter(engine)
 
