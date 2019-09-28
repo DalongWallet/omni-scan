@@ -110,4 +110,6 @@ func (s *Server) initRouter(r gin.IRouter) {
 	r.POST("/api/v1/sendRawTx", s.SendRawTransaction)
 	r.POST("/api/v1/decodeRawTx", s.DecodeRawTransaction)
 	r.GET("/api/v1/usdtBalanceRPC", s.GetAddressUsdtBalanceByRpc)
+	r.GET("/api/v1/latestBlockInfo", s.GetLatestBlockInfo)
+	r.GET("/api/v1/latestBlockInfoRPC", s.GetLatestBlockInfoByRpc)
 }

@@ -101,6 +101,25 @@ func (s *Server) GetAddressPropertyBalance(c *gin.Context) {
 	RespJson(c, OK, balance)
 }
 
+func (s *Server) GetLatestBlockInfo (c *gin.Context) {
+	var latestBlockInfo models.OmniInfoResult
+	if err := latestBlockInfo.Load(s.storage); err != nil {
+		RespJson(c, InternalServerError, err.Error())
+		return
+	}
+
+	RespJson(c, OK, latestBlockInfo)
+}
+
+func (s *Server) GetLatestBlockInfoByRpc (c *gin.Context) {
+	latestBlockInfo, err := rpcClient.GetLatestBlockInfo()
+	if err != nil {
+		RespJson(c, InternalServerError, err.Error())
+		return
+	}
+	RespJson(c, OK, latestBlockInfo)
+}
+
 func (s *Server) GetAddressUsdtBalanceByRpc(c *gin.Context) {
 	addr := c.Query("address")
 	if addr == "" {

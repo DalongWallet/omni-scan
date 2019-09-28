@@ -1,5 +1,9 @@
 package models
 
+import (
+	"github.com/DalongWallet/omni-scan/storage/leveldb"
+	"github.com/DalongWallet/omni-scan/utils"
+)
 
 type Alert struct {
 	AlertType    string `json:"alerttype"`
@@ -13,9 +17,13 @@ type OmniInfoResult struct {
 	MasterCoreVersion       string  `json:"mastercoreversion"`
 	BitcoinCoreVersion      string  `json:"bitcoincoreversion"`
 	CommitInfo              string  `json:"commitinfo"`
-	BlockHeight             int64     `json:"block"`
+	BlockHeight             int64    `json:"block"`
 	BlockTime               int64   `json:"blocktime"`
 	LatestBlockTransactions int64   `json:"blocktransactions"`
 	TotalTransactions       int64   `json:"totaltransactions"`
 	Alerts                  []Alert `json:"alerts"`
+}
+
+func (latestBlockInfo *OmniInfoResult) Load(store *leveldb.LevelStorage) (error) {
+	return utils.Load(store, LatestBlockInfoKey(), latestBlockInfo)
 }

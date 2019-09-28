@@ -11,6 +11,10 @@ const (
 	ContextKey         = "context"
 )
 
+func LatestBlockInfoKey() string {
+	return "latestBlockInfo"
+}
+
 // key:  tx-{tx.txid}
 func TxKey(txid string) string {
 	return TxKeyPrefix + txid

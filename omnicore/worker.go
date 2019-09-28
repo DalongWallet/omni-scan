@@ -82,18 +82,11 @@ func (w *Worker) Run() {
 			time.Sleep(1 * time.Second)
 			continue
 		}
-		if err = db.Set("latestBlockInfo", latestBlockData); err != nil {
+		if err = db.Set(models.LatestBlockInfoKey(), latestBlockData); err != nil {
 			errLogger.Error(fmt.Sprintf("GetInfo Failed, %+v \n\n", err))
 			time.Sleep(1 * time.Second)
 			continue
 		}
-
-
-		//increment = decimal.New(1000,0).Mul(decimal.NewFromFloat(math.Pow(0.4, float64((endScanBlockHeight - 200000) / 100000 )))).IntPart()
-		//if increment == 0 || latestBlock.BlockHeight - endScanBlockHeight <= 10  {
-		//	increment = 1
-		//}
-
 
 		if startScanBlockHeight > latestBlock.BlockHeight {
 			time.Sleep(5 * time.Second)
