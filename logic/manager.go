@@ -45,6 +45,9 @@ func (m *OmniMgr) GetAddressConfirmedTxs(address string, propertyId int, limit u
 	sort.Sort(txs)
 
 	start, end := int(offset), int(offset+limit)
+	if start > len(txs) {
+		return
+	}
 	if end > len(txs) {
 		end = len(txs)
 	}
