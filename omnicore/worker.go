@@ -66,7 +66,6 @@ func (w *Worker) Run() {
 			return
 		}
 
-		// TODO: save LatestBlockInfo
 		latestBlock, err := w.rpcClient.GetLatestBlockInfo()
 		if err != nil {
 			if err.Error() != "Work queue depth exceeded" {
@@ -91,6 +90,19 @@ func (w *Worker) Run() {
 		if startScanBlockHeight > latestBlock.BlockHeight {
 			time.Sleep(5 * time.Second)
 			continue
+		}
+
+		if latestBlock.BlockHeight > endScanBlockHeight {
+			if latestBlock.BlockHeight - endScanBlockHeight > 1000 {
+				increment = 1000
+			} else if latestBlock.BlockHeight - endScanBlockHeight < 10 {
+				increment = 1
+			} else {
+				increment = latestBlock.BlockHeight - endScanBlockHeight
+			}
+		}else {
+			endScanBlockHeight = latestBlock.BlockHeight
+			increment = 1
 		}
 
 		recordNums := 0
@@ -189,14 +201,6 @@ func (w *Worker) Run() {
 		}
 
 		infoLogger.Info(fmt.Sprintf("hasScannedBlockHeight: %d, recordNums: %d, use: %s", endScanBlockHeight, recordNums, time.Since(start).String()))
-
-		if latestBlock.BlockHeight - endScanBlockHeight < 10 {
-			increment = 1
-		}
-
-		if endScanBlockHeight + increment >= latestBlock.BlockHeight {
-			increment = latestBlock.BlockHeight - endScanBlockHeight
-		}
 
 		startScanBlockHeight, endScanBlockHeight = endScanBlockHeight+1, endScanBlockHeight+increment
 	}
