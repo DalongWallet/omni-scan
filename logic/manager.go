@@ -41,16 +41,17 @@ func (m *OmniMgr) GetAddressConfirmedTxs(address string, propertyId int, limit u
 	if err != nil || len(confirmTxs) == 0 {
 		return
 	}
-	txs := models.TxByTimeDescSlice(confirmTxs)
-	sort.Sort(txs)
 
 	start, end := int(offset), int(offset+limit)
-	if start > len(txs) {
-		return
+	if start > len(confirmTxs) {
+		return []*models.Transaction{}, nil
 	}
-	if end > len(txs) {
-		end = len(txs)
+	if end > len(confirmTxs) {
+		end = len(confirmTxs)
 	}
+
+	txs := models.TxByTimeDescSlice(confirmTxs)
+	sort.Sort(txs)
 	confirmTxs = txs[start:end]
 	return
 }
