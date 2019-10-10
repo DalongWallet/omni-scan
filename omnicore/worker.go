@@ -189,7 +189,22 @@ func (w *Worker) Run() {
 							continue
 						}
 						for i:=0; i<len(propertyList); i++ {
-							batch.Delete(models.AddrPropertyBalanceKey(addr, propertyList[i].PropertyId))
+							propertyBalance := &models.PropertyTokenBalance{
+								PropertyId:   propertyList[i].PropertyId,
+								Name:         propertyList[i].Name,
+								TokenBalance: models.TokenBalance{
+									Balance: "0",
+									Reserved:"0",
+									Frozen: "0",
+								},
+							}
+							propertyBalanceBytes, err := json.Marshal(propertyBalance)
+							if err != nil {
+								errLogger.Error(fmt.Sprintf("Marshal PropertyBalance [ %+v ] Failed, %+v \n\n",propertyBalance, err))
+								time.Sleep(1 * time.Second)
+								continue
+							}
+							batch.Set(models.AddrPropertyBalanceKey(addr, propertyList[i].PropertyId),propertyBalanceBytes)
 						}
 					}
 					addrQueue.MarkTaskDone()
