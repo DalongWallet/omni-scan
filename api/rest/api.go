@@ -92,7 +92,14 @@ func (s *Server) GetAddressPropertyBalance(c *gin.Context) {
 	}
 	propertyId, _ := strconv.Atoi(propertyIdStr)
 
-	var balance models.PropertyTokenBalance
+	balance := &models.PropertyTokenBalance{
+		PropertyId: propertyId,
+		TokenBalance: models.TokenBalance{
+			Balance:  "0",
+			Reserved: "0",
+			Frozen:   "0",
+		},
+	}
 	if err := balance.Load(s.storage, addr, propertyId); err != nil {
 		RespJson(c, InternalServerError, err.Error())
 		return
@@ -142,7 +149,15 @@ func (s *Server) GetAddressUsdtBalance(c *gin.Context) {
 		return
 	}
 
-	var balance models.PropertyTokenBalance
+	balance := &models.PropertyTokenBalance{
+		PropertyId: OmniPropertyUSDT,
+		Name: "TetherUS",
+		TokenBalance: models.TokenBalance{
+			Balance:  "0",
+			Reserved: "0",
+			Frozen:   "0",
+		},
+	}
 	if err := balance.Load(s.storage, addr, OmniPropertyUSDT); err != nil {
 		RespJson(c, InternalServerError, err.Error())
 		return
