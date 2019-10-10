@@ -94,6 +94,22 @@ func (client *OmniClient) GetAllBalancesForId(propertyId int) (addrTokenBalanceL
 	return
 }
 
+func (client *OmniClient) ListProperties() (propertyList []models.Property, err error) {
+	cmd := ListPropertiesCommand{}
+	var result []byte
+	if result, err = client.Exec(cmd); err != nil {
+		if rpcErr, ok := errors.Cause(err).(*rpcError); ok {
+			if reflect.DeepEqual(rpcErr, ErrAddressNotFound) {
+				err = nil
+			}
+		}
+		return
+	}
+
+	err = unmarshal(result, &propertyList, "ListProperties")
+	return
+}
+
 func (client *OmniClient) GetAllBalancesForAddress(address string) (propertyTokenBalanceList []models.PropertyTokenBalance, err error) {
 	cmd := GetAllBalancesForAddressCommand{
 		Address: address,

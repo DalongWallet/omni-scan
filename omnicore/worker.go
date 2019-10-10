@@ -179,6 +179,19 @@ func (w *Worker) Run() {
 						}
 						batch.Set(key, balanceBytes)
 					}
+					if len(addrAllBalances) == 0 {
+						propertyList, err := w.rpcClient.ListProperties()
+						if err != nil {
+							if err.Error() != "Work queue depth exceeded" {
+								errLogger.Error(fmt.Sprintf("ListProperties failed: [ %+v ] \n\n", err))
+							}
+							time.Sleep(1 * time.Second)
+							continue
+						}
+						for i:=0; i<len(propertyList); i++ {
+							batch.Delete(models.AddrPropertyBalanceKey(addr, propertyList[i].PropertyId))
+						}
+					}
 					addrQueue.MarkTaskDone()
 				}
 

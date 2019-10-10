@@ -35,6 +35,10 @@ func AddrPropertyBalanceKey(addr string, propertyId int) string {
 	return fmt.Sprintf("%s-%s-%d", BalanceKeyPrefix, addr, propertyId)
 }
 
+func AddrBalanceKey(addr string) string {
+	return fmt.Sprintf("%s-%s", BalanceKeyPrefix, addr)
+}
+
 func Encode(v proto.Message) ([]byte, error) {
 	return proto.Marshal(v)
 }
